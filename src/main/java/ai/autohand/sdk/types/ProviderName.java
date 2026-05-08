@@ -4,6 +4,7 @@ package ai.autohand.sdk.types;
  * Supported LLM providers in the Autohand CLI.
  */
 public enum ProviderName {
+    AUTOHANDAI,
     OPENROUTER,
     OLLAMA,
     LLAMACPP,

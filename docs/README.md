@@ -4,6 +4,8 @@ The Java SDK controls Autohand code agents through the CLI JSON-RPC mode. It
 offers a low-level `AutohandSDK` and a higher-level `Agent` / `Run` API using
 Java records, enums, and sealed event types.
 
+Canonical hosted docs live at [https://autohand.ai/docs/agent-sdk/](https://autohand.ai/docs/agent-sdk/).
+
 ## Guides
 
 - [Getting Started](./getting-started.md)
@@ -16,3 +18,5 @@ Java records, enums, and sealed event types.
 - [Plan Mode](./plan-mode.md)
 - [Memory](./memory.md)
 - [SDLC Workflows](./sdlc-workflows.md)
+- [Contributing](../CONTRIBUTING.md)
+- [SDLC Guide](../SDLC.md)

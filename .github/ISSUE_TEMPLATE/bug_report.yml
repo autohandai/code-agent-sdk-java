@@ -1,0 +1,110 @@
+name: Bug Report
+description: Report a bug or unexpected Java SDK behavior
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please include enough detail for us to reproduce the SDK behavior.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear description of what went wrong.
+      placeholder: Describe what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Include the smallest Java snippet, command, or example that reproduces the issue.
+      placeholder: |
+        1. Create `Agent` with ...
+        2. Run `mvn ...`
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      placeholder: I expected...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      placeholder: Instead...
+    validations:
+      required: true
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: Java SDK Version or Commit
+      placeholder: "1.0.0-SNAPSHOT or commit SHA"
+    validations:
+      required: true
+
+  - type: input
+    id: cli-version
+    attributes:
+      label: Autohand CLI Version
+      description: Run `autohand --version`.
+      placeholder: "0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: java-version
+    attributes:
+      label: Java Version
+      description: Run `java -version`.
+      placeholder: "OpenJDK 21.0.x"
+    validations:
+      required: true
+
+  - type: input
+    id: maven-version
+    attributes:
+      label: Maven Version
+      description: Run `mvn -version`.
+      placeholder: "Apache Maven 3.9.x"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (x64)
+        - Linux (ARM64)
+        - Windows (x64)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or Stack Trace
+      description: Remove API keys, access tokens, personal data, and private paths when possible.
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for this bug.
+          required: true
+        - label: I removed secrets and sensitive information from logs/config.
+          required: true

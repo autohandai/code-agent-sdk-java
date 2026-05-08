@@ -11,7 +11,7 @@ class JsonParserTest {
     record Simple(String name, int value) {}
 
     @Test
-    void parseDirectJson() {
+    void parseDirectJson() throws StructuredOutputError {
         String json = "{\"name\":\"test\",\"value\":42}";
         Simple result = JsonParser.parseJsonText(json, Simple.class);
         assertEquals("test", result.name());
@@ -19,7 +19,7 @@ class JsonParserTest {
     }
 
     @Test
-    void parseFencedJson() {
+    void parseFencedJson() throws StructuredOutputError {
         String text = "Some text\n```json\n{\"name\":\"fenced\",\"value\":1}\n```\nMore text";
         Simple result = JsonParser.parseJsonText(text, Simple.class);
         assertEquals("fenced", result.name());
@@ -27,7 +27,7 @@ class JsonParserTest {
     }
 
     @Test
-    void parseEmbeddedJson() {
+    void parseEmbeddedJson() throws StructuredOutputError {
         String text = "Here is the data: {\"name\":\"embedded\",\"value\":2} and more text";
         Simple result = JsonParser.parseJsonText(text, Simple.class);
         assertEquals("embedded", result.name());

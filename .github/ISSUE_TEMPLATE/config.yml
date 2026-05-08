@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Agent SDK Documentation
+    url: https://autohand.ai/docs/agent-sdk/
+    about: Read guides, concepts, and cross-language SDK docs.
+  - name: Autohand Code CLI
+    url: https://github.com/autohandai/code-cli
+    about: Report CLI-specific behavior in the CLI repository.
+  - name: Security Issues
+    url: mailto:security@autohand.ai
+    about: Report security vulnerabilities privately by email.

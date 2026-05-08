@@ -1,6 +1,18 @@
 # Configuration
 
-`SDKConfig` carries CLI startup configuration.
+`SDKConfig` carries CLI startup configuration. Prefer the builder for new code:
+
+```java
+SDKConfig config = SDKConfig.builder()
+    .cwd(".")
+    .cliPath(System.getenv("AUTOHAND_CLI_PATH"))
+    .model("openrouter/auto")
+    .appendSystemPrompt("Prefer concise Java examples.")
+    .addDirectory("../shared")
+    .build();
+```
+
+The compatibility constructor is still supported:
 
 ```java
 SDKConfig config = new SDKConfig(
@@ -12,8 +24,8 @@ SDKConfig config = new SDKConfig(
 );
 ```
 
-The Java scaffold accepts the long generated constructor shape used by the
-examples, so existing examples can pass provider, permission, skill, context,
+The Java SDK also accepts the long generated constructor shape used by the
+cross-language examples, so existing examples can pass model, skill, context,
 session, and AGENTS.md objects without source changes.
 
 ## Provider Setup

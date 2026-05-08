@@ -4,6 +4,8 @@ Java SDK for controlling Autohand code agents through the CLI JSON-RPC mode.
 
 **Beta:** this SDK is actively evolving while the Agent SDK APIs stabilize. Pin versions in production and review release notes before upgrading.
 
+Official documentation: [https://autohand.ai/docs/agent-sdk/](https://autohand.ai/docs/agent-sdk/)
+
 ## Other Programming Languages (Beta)
 
 The Agent SDK is available in multiple beta language packages. Use the same Autohand code-agent model from another programming language:
@@ -13,6 +15,9 @@ The Agent SDK is available in multiple beta language packages. Use the same Auto
 - [Python](https://github.com/autohandai/code-agent-sdk-python) - async Python package with `async for` event streams and typed Pydantic models.
 - [Java](https://github.com/autohandai/code-agent-sdk-java) - this package, with Java 21 records, sealed events, and virtual-thread-ready APIs.
 - [Swift](https://github.com/autohandai/code-agent-sdk-swift) - SwiftPM package with `Agent`, `Runner`, async streams, tools, hooks, and permissions.
+- [Rust](https://github.com/autohandai/code-agent-sdk-rust) - async Rust crate with Tokio, typed events, and stream-based runs.
+- [C++](https://github.com/autohandai/code-agent-sdk-cpp) - modern C++20 package with CMake targets and typed event callbacks.
+- [C#](https://github.com/autohandai/code-agent-sdk-csharp) - .NET package with `IAsyncEnumerable`, `CancellationToken`, and `System.Text.Json`.
 
 ## Requirements
 
@@ -124,10 +129,11 @@ User -> Java SDK -> CLI Subprocess (RPC mode) -> Provider -> HTTP
 ```
 
 The SDK:
-- Spawns the Autohand CLI as a subprocess
+- Spawns the Autohand CLI with `--mode rpc`
 - Communicates via JSON-RPC 2.0 over stdin/stdout
-- Provides an idiomatic Java API with sealed event types
-- Supports streaming events using virtual threads
+- Provides an idiomatic Java API with builders, records, and sealed event types
+- Streams events through Java callbacks while preserving typed permission replies
+- Keeps future CLI notifications inspectable with `Events.UnknownEvent`
 
 ## Project Structure
 
@@ -137,7 +143,7 @@ src/main/java/ai/autohand/sdk/
   types/                      # Records, enums, sealed event types
     Event.java                  # Sealed event interface
     Events.java                 # Concrete event records
-    SDKConfig.java              # Configuration record
+    SDKConfig.java              # Configuration builder and compatibility constructor
     PromptParams.java           # Prompt parameters
     ...
   transport/
@@ -163,12 +169,16 @@ mvn clean compile
 # Run tests
 mvn test
 
+# Compile every example against the public API
+scripts/validate-examples.sh
+
 # Package
 mvn package
 ```
 
 ## Documentation
 
+- [Agent SDK Docs](https://autohand.ai/docs/agent-sdk/)
 - [Getting Started](./docs/getting-started.md)
 - [API Reference](./docs/API_REFERENCE.md)
 - [Configuration](./docs/configuration.md)
@@ -179,6 +189,8 @@ mvn package
 - [Plan Mode](./docs/plan-mode.md)
 - [Memory](./docs/memory.md)
 - [SDLC Workflows](./docs/sdlc-workflows.md)
+- [Contributing](./CONTRIBUTING.md)
+- [SDLC Guide](./SDLC.md)
 
 ## License
 

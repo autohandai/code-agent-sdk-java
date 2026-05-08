@@ -1,5 +1,7 @@
 # SDLC Workflows With The Java SDK
 
+For the repository-level contribution process, see [../SDLC.md](../SDLC.md).
+
 ## Discovery
 
 ```java

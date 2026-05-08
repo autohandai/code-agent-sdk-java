@@ -17,7 +17,8 @@ Agent agent = Agent.create(AgentOptions.builder()
 - `Agent.create(AgentOptions options)`: starts a session.
 - `agent.send(String prompt)`: creates a `Run`.
 - `agent.run(String prompt)`: waits for a completed `RunResult`.
-- `agent.runJson(String prompt, Class<T> type)`: parses final output as JSON when a validator/parser is available.
+- `agent.runJson(String prompt, Class<T> type)`: parses final output as JSON.
+- `agent.runJson(String prompt, Class<T> type, String schemaName, Object schema, Map<String, Object> options)`: appends JSON output instructions and parses the final output.
 - `agent.allowPermission(String requestId, DecisionScope scope)`: approves a permission request.
 - `agent.denyPermission(String requestId, DecisionScope scope)`: denies a permission request.
 - `agent.close()`: stops the session.
@@ -50,16 +51,24 @@ sdk.stop();
 ### AutohandSDK
 
 - `start()`, `stop()`, `close()`
-- `prompt(PromptParams params)`
+- `prompt(PromptParams params)`: returns `PromptResult`
 - `streamPrompt(PromptParams params, Consumer<Event> onEvent)`
 - `setPermissionMode(PermissionMode mode)`
 - `setPlanMode(boolean enabled)`, `enablePlanMode()`, `disablePlanMode()`
 - `setModel(String model)`
 - `setMaxThinkingTokens(int tokens)`
+- `clearMaxThinkingTokens()`
 - `applyFlagSettings(Map<String, Object> settings)`
-- `supportedModels()`
-- `getContextUsage()`
-- `accountInfo()`
+- `supportedModels()`: returns `List<ModelInfo>`
+- `supportedCommands()`: returns `List<String>`
+- `getState()`, `getMessages()`
+- `getContextUsage()`: returns `ContextUsage`
+- `accountInfo()`, `getAccountInfo()`: returns `AccountInfo`
+- `reloadPlugins()`
+- `toggleMcpServer(String serverName, boolean enabled)`
+- `reconnectMcpServer(String serverName)`
+- `setMcpServers(Map<String, McpServerConfig> servers)`
+- `getHooks()`, `addHook(HookDefinition hook)`, `removeHook(HookEvent event, int index)`, `toggleHook(HookEvent event, int index)`
 - `saveSession()`, `resumeSession(String sessionId)`
 - `getSessionMetadata()`, `getStats()`
 - `allowPermission(String requestId, DecisionScope scope)`
@@ -82,7 +91,9 @@ Events implement the `Event` marker interface and are exposed as records under
 - `ToolUpdateEvent`
 - `ToolEndEvent`
 - `PermissionRequestEvent`
+- `FileModifiedEvent`
 - `ErrorEvent`
+- `UnknownEvent`
 
 Use Java 21 pattern matching:
 

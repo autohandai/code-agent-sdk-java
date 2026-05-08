@@ -13,6 +13,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ModelInfo(
     String id,
     String displayName,
-    @JsonInclude(JsonInclude.Include.NON_NULL) String description
+    @JsonInclude(JsonInclude.Include.NON_NULL) String description,
+    @JsonInclude(JsonInclude.Include.NON_NULL) String provider
 ) {
+    public ModelInfo(String id, String displayName, String description) {
+        this(id, displayName, description, null);
+    }
 }

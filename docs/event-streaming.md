@@ -33,3 +33,7 @@ run.stream(event -> {
 RunResult result = run.waitForResult();
 System.out.println(result.text());
 ```
+
+If the CLI emits a notification before the Java SDK has a typed event for it,
+the callback receives `Events.UnknownEvent` with the raw JSON params. This keeps
+new CLI events observable without breaking older SDK versions.

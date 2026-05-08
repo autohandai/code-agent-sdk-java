@@ -6,6 +6,8 @@
 2. Maven 3.9 or later
 3. Autohand CLI binary available on your system or in the `cli/` directory
 
+Official Agent SDK docs: [https://autohand.ai/docs/agent-sdk/](https://autohand.ai/docs/agent-sdk/)
+
 ## Installation
 
 ### Maven
@@ -15,7 +17,7 @@ Add the dependency to your `pom.xml`:
 ```xml
 <dependency>
     <groupId>ai.autohand</groupId>
-    <artifactId>agent-sdk-java</artifactId>
+    <artifactId>code-agent-sdk-java</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -32,12 +34,12 @@ mvn clean install
 ### SDK Configuration
 
 ```java
-SDKConfig config = new SDKConfig(
-    ".",                    // Working directory
-    "/path/to/autohand",    // CLI path (optional, auto-detected)
-    false,                  // Debug logging
-    300_000                 // Request timeout in ms
-);
+SDKConfig config = SDKConfig.builder()
+    .cwd(".")
+    .cliPath(System.getenv("AUTOHAND_CLI_PATH"))
+    .model("openrouter/auto")
+    .appendSystemPrompt("Prefer concise Java examples.")
+    .build();
 ```
 
 ### CLI Configuration
@@ -138,5 +140,6 @@ sdk.suggestPermissionAlternative(requestId, "Run mvn test first");
 
 ## Next Steps
 
-- See `src/examples/` for more examples
+- See `examples/` for more examples
 - Read `docs/advanced-patterns.md` for streaming, plan mode, and hooks
+- Run `scripts/validate-examples.sh` before changing example code

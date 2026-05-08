@@ -1,6 +1,8 @@
 package ai.autohand.sdk.sdk;
 
 public final class StructuredOutputError extends Exception {
+    private static final long serialVersionUID = 1L;
+
     private final String rawResponse;
 
     public StructuredOutputError(String message, String rawResponse) {

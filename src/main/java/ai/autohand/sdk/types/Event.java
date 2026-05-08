@@ -5,5 +5,5 @@ public sealed interface Event permits Events.AgentStartEvent, Events.AgentEndEve
         Events.TurnStartEvent, Events.TurnEndEvent, Events.MessageStartEvent,
         Events.MessageUpdateEvent, Events.MessageEndEvent, Events.ToolStartEvent,
         Events.ToolUpdateEvent, Events.ToolEndEvent, Events.PermissionRequestEvent,
-        Events.ErrorEvent {
+        Events.FileModifiedEvent, Events.ErrorEvent, Events.UnknownEvent {
 }

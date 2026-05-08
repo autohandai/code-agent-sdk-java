@@ -8,9 +8,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public final class HookResultTypes {
     private HookResultTypes() {}
 
-    public record GetHooksResult(HooksSettings settings) {}
+    public record GetHooksResult(HooksSettings settings) {
+        public java.util.List<HookDefinition> hooks() {
+            return settings == null || settings.hooks() == null ? java.util.List.of() : settings.hooks();
+        }
+    }
 
-    public record AddHookResult(boolean success, @JsonInclude(JsonInclude.Include.NON_NULL) String hookId) {}
+    public record AddHookResult(
+        boolean success,
+        @JsonInclude(JsonInclude.Include.NON_NULL) String hookId,
+        @JsonInclude(JsonInclude.Include.NON_NULL) String message
+    ) {
+        public AddHookResult(boolean success, String hookId) {
+            this(success, hookId, success ? "Hook added" : "Hook was not added");
+        }
+
+        public String message() {
+            return message == null ? (success ? "Hook added" : "Hook was not added") : message;
+        }
+    }
 
     public record RemoveHookResult(boolean success) {}
 

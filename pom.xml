@@ -11,8 +11,8 @@
     <packaging>jar</packaging>
 
     <name>Autohand Code Agent SDK for Java</name>
-    <description>Java SDK for controlling Autohand code agents through the CLI JSON-RPC mode</description>
-    <url>https://github.com/autohandai/code-agent-sdk-java</url>
+    <description>Autohand Code Agent SDK for Java: Java 21 CLI-backed agent orchestration with records, sealed events, docs at https://autohand.ai/docs/agent-sdk/, and examples.</description>
+    <url>https://autohand.ai/docs/agent-sdk/</url>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>

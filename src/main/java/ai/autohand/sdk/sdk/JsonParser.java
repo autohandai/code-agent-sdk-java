@@ -60,7 +60,7 @@ public final class JsonParser {
      * @return the parsed object
      * @throws StructuredOutputError if no valid JSON can be extracted
      */
-    public static <T> T parseJsonText(String text, Class<T> clazz) {
+    public static <T> T parseJsonText(String text, Class<T> clazz) throws StructuredOutputError {
         String trimmed = text.trim();
         if (trimmed.isEmpty()) {
             throw new StructuredOutputError("Expected JSON output, received an empty response.", text);

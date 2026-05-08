@@ -1,7 +1,8 @@
 # Error Handling
 
-The Java SDK uses checked exceptions for startup and structured-output failures,
-and emits agent-loop failures as `Events.ErrorEvent`.
+The Java SDK uses checked exceptions for startup and structured-output parsing,
+unchecked `AutohandException` subclasses for transport/RPC failures, and
+`Events.ErrorEvent` for agent-loop failures emitted by the CLI.
 
 ## Startup And Transport
 
@@ -18,6 +19,18 @@ Common causes:
 - `AUTOHAND_CLI_PATH` points to a missing binary.
 - The CLI has no configured provider.
 - The workspace path is invalid.
+
+## RPC And Timeout Errors
+
+```java
+try {
+    sdk.streamPrompt(new PromptParams("Run checks"), System.out::println);
+} catch (RequestTimeoutException timeout) {
+    System.err.println("Timed out calling " + timeout.method());
+} catch (RpcException rpc) {
+    System.err.println("RPC failed: " + rpc.method() + " code=" + rpc.code());
+}
+```
 
 ## Stream Errors
 
