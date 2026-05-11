@@ -18,7 +18,7 @@ Add the dependency to your `pom.xml`:
 <dependency>
     <groupId>ai.autohand</groupId>
     <artifactId>code-agent-sdk-java</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
 
@@ -142,4 +142,5 @@ sdk.suggestPermissionAlternative(requestId, "Run mvn test first");
 
 - See `examples/` for more examples
 - Read `docs/advanced-patterns.md` for streaming, plan mode, and hooks
+- Read `docs/publishing.md` for Maven Central release setup
 - Run `scripts/validate-examples.sh` before changing example code

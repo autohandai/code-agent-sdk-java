@@ -45,4 +45,5 @@ AUTOHAND_CLI_PATH=/path/to/autohand mvn compile exec:java -Dexec.mainClass="High
 - Confirm issue templates and community files are present.
 - Confirm GitHub repository metadata points to
   [https://autohand.ai/docs/agent-sdk/](https://autohand.ai/docs/agent-sdk/).
+- Confirm Maven Central release setup in [docs/publishing.md](./docs/publishing.md).
 - Use Conventional Commits so release automation can classify changes.

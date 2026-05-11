@@ -4,7 +4,7 @@ package ai.autohand.sdk.types;
  * All available hook events in the CLI.
  *
  * @see HookDefinition
- * @see AutohandSDK#addHook(HookDefinition)
+ * @see ai.autohand.sdk.sdk.AutohandSDK#addHook(HookDefinition)
  */
 public enum HookEvent {
     SESSION_START,

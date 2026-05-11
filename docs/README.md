@@ -18,5 +18,6 @@ Canonical hosted docs live at [https://autohand.ai/docs/agent-sdk/](https://auto
 - [Plan Mode](./plan-mode.md)
 - [Memory](./memory.md)
 - [SDLC Workflows](./sdlc-workflows.md)
+- [Publishing To Maven Central](./publishing.md)
 - [Contributing](../CONTRIBUTING.md)
 - [SDLC Guide](../SDLC.md)

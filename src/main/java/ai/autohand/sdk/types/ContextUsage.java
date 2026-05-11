@@ -9,7 +9,7 @@ package ai.autohand.sdk.types;
  * @param mcpTools tokens used by MCP tool definitions
  * @param memoryFiles tokens used by loaded memory files
  * @param total total tokens used
- * @see AutohandSDK#getContextUsage()
+ * @see ai.autohand.sdk.sdk.AutohandSDK#getContextUsage()
  */
 public record ContextUsage(
     int systemPrompt,

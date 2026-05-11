@@ -33,9 +33,13 @@ Add to your `pom.xml`:
 <dependency>
     <groupId>ai.autohand</groupId>
     <artifactId>code-agent-sdk-java</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
 </dependency>
 ```
+
+Maven Central releases are produced by the GitHub Actions release workflow. See
+[Publishing To Maven Central](./docs/publishing.md) for the release checklist and
+required repository secrets.
 
 Or build locally:
 
@@ -174,6 +178,9 @@ scripts/validate-examples.sh
 
 # Package
 mvn package
+
+# Build Maven Central release artifacts locally (requires GPG)
+mvn -P release verify
 ```
 
 ## Documentation
@@ -189,9 +196,10 @@ mvn package
 - [Plan Mode](./docs/plan-mode.md)
 - [Memory](./docs/memory.md)
 - [SDLC Workflows](./docs/sdlc-workflows.md)
+- [Publishing To Maven Central](./docs/publishing.md)
 - [Contributing](./CONTRIBUTING.md)
 - [SDLC Guide](./SDLC.md)
 
 ## License
 
-Apache License 2.0
+[Apache License 2.0](./LICENSE)

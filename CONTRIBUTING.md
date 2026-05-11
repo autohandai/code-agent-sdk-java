@@ -27,6 +27,16 @@ scripts/validate-examples.sh
 example under `examples/`. `scripts/validate-examples.sh` is the standalone
 example gate used when you only want to verify copy-paste source compatibility.
 
+Release artifacts are built with:
+
+```bash
+mvn -P release verify
+```
+
+Publishing to Maven Central is handled by GitHub Actions. See
+[docs/publishing.md](./docs/publishing.md) for the required Sonatype and GPG
+secrets.
+
 ## API Design Expectations
 
 - Keep the high-level `Agent` / `Run` API pleasant for normal application code.

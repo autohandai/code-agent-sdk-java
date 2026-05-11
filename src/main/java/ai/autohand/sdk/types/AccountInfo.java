@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param email the account email address
  * @param organization the organization name, if applicable
  * @param subscriptionType the subscription tier
- * @see AutohandSDK#accountInfo()
+ * @see ai.autohand.sdk.sdk.AutohandSDK#accountInfo()
  */
 public record AccountInfo(
     String email,

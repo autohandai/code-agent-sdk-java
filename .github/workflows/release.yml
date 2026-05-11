@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Maven release version, for example 1.0.0
+        required: true
+        type: string
+      auto_publish:
+        description: Publish automatically after Central Portal validation
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  maven-central:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Resolve release version
+        id: release
+        shell: bash
+        env:
+          RELEASE_INPUT: ${{ github.event.inputs.version }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          AUTO_PUBLISH_INPUT: ${{ github.event.inputs.auto_publish }}
+        run: |
+          version="${RELEASE_INPUT:-${RELEASE_TAG:-${GITHUB_REF_NAME}}}"
+          version="${version#v}"
+
+          if [[ -z "$version" ]]; then
+            echo "Could not resolve a Maven release version." >&2
+            exit 1
+          fi
+
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+){2}([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release version '$version' does not look like a Maven release version." >&2
+            exit 1
+          fi
+
+          auto_publish="${AUTO_PUBLISH_INPUT:-true}"
+          wait_until="validated"
+          if [[ "$auto_publish" == "true" ]]; then
+            wait_until="published"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "auto_publish=$auto_publish" >> "$GITHUB_OUTPUT"
+          echo "wait_until=$wait_until" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 21 and Maven Central credentials
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Set Maven release version
+        run: >
+          mvn --batch-mode --no-transfer-progress
+          org.codehaus.mojo:versions-maven-plugin:2.17.1:set
+          -DnewVersion=${{ steps.release.outputs.version }}
+          -DgenerateBackupPoms=false
+
+      - name: Verify SDK before publishing
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Compile examples
+        run: scripts/validate-examples.sh
+
+      - name: Publish to Maven Central
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+        run: >
+          mvn --batch-mode --no-transfer-progress
+          -P release
+          -DskipTests
+          -Dcentral.publish.auto=${{ steps.release.outputs.auto_publish }}
+          -Dcentral.publish.waitUntil=${{ steps.release.outputs.wait_until }}
+          deploy
