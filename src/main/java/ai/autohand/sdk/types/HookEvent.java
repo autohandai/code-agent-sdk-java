@@ -15,6 +15,7 @@ public enum HookEvent {
     POST_TOOL,
     FILE_MODIFIED,
     STOP,
+    POST_RESPONSE,
     SUBAGENT_STOP,
     PERMISSION_REQUEST,
     NOTIFICATION,
@@ -30,8 +31,8 @@ public enum HookEvent {
     PRE_LEARN,
     POST_LEARN,
     TEAM_CREATED,
-    TEAM_MATE_SPAWNED,
-    TEAM_MATE_IDLE,
+    TEAMMATE_SPAWNED,
+    TEAMMATE_IDLE,
     TASK_ASSIGNED,
     TASK_COMPLETED,
     TEAM_SHUTDOWN,
@@ -44,7 +45,14 @@ public enum HookEvent {
     CONTEXT_COMPACT,
     CONTEXT_OVERFLOW,
     CONTEXT_WARNING,
-    CONTEXT_CRITICAL;
+    CONTEXT_CRITICAL,
+
+    /** @deprecated Use {@link #TEAMMATE_SPAWNED}; this alias preserves older SDK source compatibility. */
+    @Deprecated
+    TEAM_MATE_SPAWNED,
+    /** @deprecated Use {@link #TEAMMATE_IDLE}; this alias preserves older SDK source compatibility. */
+    @Deprecated
+    TEAM_MATE_IDLE;
 
     /**
      * Returns the CLI-compatible event name.
@@ -53,6 +61,13 @@ public enum HookEvent {
      * @return the event name formatted for CLI communication
      */
     public String toCliString() {
+        if (this == TEAM_MATE_SPAWNED) {
+            return TEAMMATE_SPAWNED.toCliString();
+        }
+        if (this == TEAM_MATE_IDLE) {
+            return TEAMMATE_IDLE.toCliString();
+        }
+
         String raw = name().toLowerCase().replace("_", "-");
         // Automode events use colon separator
         if (raw.startsWith("automode-")) {
