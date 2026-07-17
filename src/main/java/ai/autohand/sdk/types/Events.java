@@ -16,7 +16,15 @@ public final class Events {
     public record TurnStartEvent(String turnId, String sessionId, String timestamp) implements Event {
     }
 
-    public record TurnEndEvent(String turnId, String status, String timestamp) implements Event {
+    public record TurnEndEvent(
+            String turnId,
+            String status,
+            Long tokensUsed,
+            String tokensUsageStatus,
+            Long durationMs,
+            Double contextPercent,
+            String timestamp
+    ) implements Event {
     }
 
     public record MessageStartEvent(String messageId, String role, String timestamp) implements Event {
@@ -53,6 +61,33 @@ public final class Events {
         public String toolId() {
             return toolCallId;
         }
+    }
+
+    /** Lifecycle notification emitted when autoresearch starts, reports status, or pauses. */
+    public record AutoresearchLifecycleEvent(
+            String phase,
+            boolean active,
+            String goal,
+            Integer iteration,
+            Integer maxIterations,
+            int runsLogged,
+            String statusText,
+            String subcommand,
+            String message,
+            String timestamp
+    ) implements Event {
+    }
+
+    /** Notification emitted around replayable-ledger operations. */
+    public record AutoresearchOperationEvent(
+            String operation,
+            String phase,
+            String attemptId,
+            boolean success,
+            Boolean applied,
+            String error,
+            String timestamp
+    ) implements Event {
     }
 
     public record ErrorEvent(int code, String message, String timestamp) implements Event {

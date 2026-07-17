@@ -85,6 +85,35 @@ For simple one-shot tasks:
 RunResult result = agent.run("Summarize the API surface");
 ```
 
+Current CLIs also expose command helpers and the typed replayable autoresearch
+ledger:
+
+```java
+if (agent.supportsCommand("/autoresearch")) {
+    Autoresearch.StartResult start = agent.startAutoresearch(
+        Autoresearch.StartParams.builder("Reduce test runtime")
+            .metricName("test_ms")
+            .metricUnit("ms")
+            .direction(Autoresearch.OptimizationDirection.LOWER)
+            .measureCommand("mvn test")
+            .build()
+    );
+    if (start.success() && start.instruction() != null) {
+        agent.send(start.instruction()).waitForResult();
+    }
+    Autoresearch.HistoryResult history = agent.getAutoresearchHistory();
+    agent.stopAutoresearch();
+}
+```
+
+Read the [replayable autoresearch guide](./docs/autoresearch.md) for replay,
+rescore, comparison, Pareto, pinning, and retention APIs.
+
+Persistent goals are also typed end to end: `getGoal`, `createGoal`,
+`updateGoal`, `clearGoal`, `queueGoal`, `startQueuedGoal`, and
+`listGoalTemplates`. See the [persistent goals guide](./docs/persistent-goals.md)
+for feature startup and nullable budget updates.
+
 For JSON output:
 
 ```java
@@ -195,6 +224,8 @@ mvn -P release verify
 - [Permissions](./docs/permissions.md)
 - [Plan Mode](./docs/plan-mode.md)
 - [Memory](./docs/memory.md)
+- [Replayable Autoresearch](./docs/autoresearch.md)
+- [Persistent Goals](./docs/persistent-goals.md)
 - [SDLC Workflows](./docs/sdlc-workflows.md)
 - [Publishing To Maven Central](./docs/publishing.md)
 - [Contributing](./CONTRIBUTING.md)

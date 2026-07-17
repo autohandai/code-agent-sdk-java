@@ -5,6 +5,7 @@ import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.transport.TransportConfig;
 import ai.autohand.sdk.types.*;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -16,7 +17,8 @@ import java.util.function.Consumer;
 
 public final class AutohandSDK implements AutoCloseable {
     private static final ObjectMapper MAPPER = new ObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
     private final SDKConfig baseConfig;
     private Transport transport;
@@ -49,6 +51,11 @@ public final class AutohandSDK implements AutoCloseable {
         }
         rebuildClient();
         transport.start();
+        if (baseConfig.features() != null) {
+            Map<String, Object> features = MAPPER.convertValue(baseConfig.features(),
+                    MAPPER.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
+            client.applyFlagSettings(Map.of("features", features));
+        }
         if (pendingPermissionMode != null) {
             client.setPermissionMode(pendingPermissionMode);
         }
@@ -159,7 +166,99 @@ public final class AutohandSDK implements AutoCloseable {
         if (commands == null || !commands.isArray()) {
             return List.of();
         }
-        return MAPPER.convertValue(commands, MAPPER.getTypeFactory().constructCollectionType(List.class, String.class));
+        List<String> values = MAPPER.convertValue(commands,
+                MAPPER.getTypeFactory().constructCollectionType(List.class, String.class));
+        return values.stream().map(command -> command.startsWith("/") ? command : "/" + command).toList();
+    }
+
+    public boolean supportsCommand(String command) {
+        String normalized = command.startsWith("/") ? command : "/" + command;
+        return supportedCommands().contains(normalized);
+    }
+
+    public Goals.SnapshotResult getGoal() {
+        ensureStarted();
+        return client.getGoal();
+    }
+
+    public Goals.MutationResult createGoal(Goals.CreateParams params) {
+        ensureStarted();
+        return client.createGoal(params);
+    }
+
+    public Goals.MutationResult updateGoal(Goals.UpdateParams params) {
+        ensureStarted();
+        return client.updateGoal(params);
+    }
+
+    public Goals.MutationResult clearGoal() {
+        ensureStarted();
+        return client.clearGoal();
+    }
+
+    public Goals.MutationResult queueGoal(Goals.CreateParams params) {
+        ensureStarted();
+        return client.queueGoal(params);
+    }
+
+    public Goals.MutationResult startQueuedGoal() {
+        ensureStarted();
+        return client.startQueuedGoal();
+    }
+
+    public Goals.TemplatesResult listGoalTemplates() {
+        ensureStarted();
+        return client.listGoalTemplates();
+    }
+
+    public Autoresearch.StartResult startAutoresearch(Autoresearch.StartParams params) {
+        ensureStarted();
+        return client.startAutoresearch(params);
+    }
+
+    public Autoresearch.StatusResult getAutoresearchStatus() {
+        ensureStarted();
+        return client.getAutoresearchStatus();
+    }
+
+    public Autoresearch.StopResult stopAutoresearch() {
+        ensureStarted();
+        return client.stopAutoresearch();
+    }
+
+    public Autoresearch.HistoryResult getAutoresearchHistory() {
+        ensureStarted();
+        return client.getAutoresearchHistory();
+    }
+
+    public Autoresearch.ReplayResult replayAutoresearch(Autoresearch.ReplayParams params) {
+        ensureStarted();
+        return client.replayAutoresearch(params);
+    }
+
+    public Autoresearch.RescoreResult rescoreAutoresearch(Autoresearch.RescoreParams params) {
+        ensureStarted();
+        return client.rescoreAutoresearch(params);
+    }
+
+    public Autoresearch.CompareResult compareAutoresearch(Autoresearch.CompareParams params) {
+        ensureStarted();
+        return client.compareAutoresearch(params);
+    }
+
+    public Autoresearch.ParetoResult getAutoresearchPareto() {
+        ensureStarted();
+        return client.getAutoresearchPareto();
+    }
+
+    public Autoresearch.PinResult pinAutoresearch(Autoresearch.PinParams params) {
+        ensureStarted();
+        return client.pinAutoresearch(params);
+    }
+
+    public Autoresearch.PruneResult pruneAutoresearch(Autoresearch.PruneParams params) {
+        ensureStarted();
+        return client.pruneAutoresearch(params);
     }
 
     public GetStateResult getState() {

@@ -34,6 +34,31 @@ public final class SDKConfig {
     private final Boolean persistSession;
     private final Boolean resume;
     private final Boolean continueSession;
+    private final Boolean bare;
+    private final Boolean idleLogout;
+    private final String fork;
+    private final String systemPromptFile;
+    private final String appendSystemPromptFile;
+    private final String mcpConfig;
+    private final String agents;
+    private final String pluginDir;
+    private final String displayLanguage;
+    private final String sessionPath;
+    private final Integer autoSaveInterval;
+    private final Boolean agentsMdEnabled;
+    private final Boolean agentsMdCreate;
+    private final String agentsMdPath;
+    private final Boolean agentsMdAutoUpdate;
+    private final Integer maxTokens;
+    private final Double compressionThreshold;
+    private final Double summarizationThreshold;
+    private final List<SkillSource> skillSources;
+    private final Boolean installMissingSkills;
+    private final String provider;
+    private final String apiKey;
+    private final String baseUrl;
+    private final String autohandAIPlan;
+    private final FeatureFlagSettings features;
     private final Object[] options;
 
     /**
@@ -56,7 +81,7 @@ public final class SDKConfig {
         this.skills = List.copyOf(builder.skills);
         this.additionalDirectories = List.copyOf(builder.additionalDirectories);
         this.extraArgs = List.copyOf(builder.extraArgs);
-        this.environment = Map.copyOf(builder.environment);
+        Map<String, String> processEnvironment = new LinkedHashMap<>(builder.environment);
         this.unrestricted = builder.unrestricted;
         this.autoMode = builder.autoMode;
         this.autoSkill = builder.autoSkill;
@@ -72,6 +97,41 @@ public final class SDKConfig {
         this.persistSession = builder.persistSession;
         this.resume = builder.resume;
         this.continueSession = builder.continueSession;
+        this.bare = builder.bare;
+        this.idleLogout = builder.idleLogout;
+        this.fork = blankToNull(builder.fork);
+        this.systemPromptFile = blankToNull(builder.systemPromptFile);
+        this.appendSystemPromptFile = blankToNull(builder.appendSystemPromptFile);
+        this.mcpConfig = blankToNull(builder.mcpConfig);
+        this.agents = blankToNull(builder.agents);
+        this.pluginDir = blankToNull(builder.pluginDir);
+        this.displayLanguage = blankToNull(builder.displayLanguage);
+        this.sessionPath = blankToNull(builder.sessionPath);
+        this.autoSaveInterval = builder.autoSaveInterval;
+        this.agentsMdEnabled = builder.agentsMdEnabled;
+        this.agentsMdCreate = builder.agentsMdCreate;
+        this.agentsMdPath = blankToNull(builder.agentsMdPath);
+        this.agentsMdAutoUpdate = builder.agentsMdAutoUpdate;
+        this.maxTokens = builder.maxTokens;
+        this.compressionThreshold = builder.compressionThreshold;
+        this.summarizationThreshold = builder.summarizationThreshold;
+        this.skillSources = List.copyOf(builder.skillSources);
+        this.installMissingSkills = builder.installMissingSkills;
+        this.provider = blankToNull(builder.provider);
+        this.apiKey = blankToNull(builder.apiKey);
+        this.baseUrl = blankToNull(builder.baseUrl);
+        this.autohandAIPlan = blankToNull(builder.autohandAIPlan);
+        this.features = builder.features;
+        if ("autohandai".equalsIgnoreCase(provider)) {
+            processEnvironment.putIfAbsent("AUTOHAND_AI_PLAN", autohandAIPlan == null ? "cloud" : autohandAIPlan);
+            if (apiKey != null) {
+                processEnvironment.putIfAbsent("AUTOHAND_AI_API_KEY", apiKey);
+            }
+            if (baseUrl != null) {
+                processEnvironment.putIfAbsent("AUTOHAND_AI_BASE_URL", baseUrl);
+            }
+        }
+        this.environment = Map.copyOf(processEnvironment);
         this.options = Arrays.copyOf(builder.options, builder.options.length);
     }
 
@@ -107,6 +167,31 @@ public final class SDKConfig {
                 .persistSession(persistSession)
                 .resume(resume)
                 .continueSession(continueSession)
+                .bare(bare)
+                .idleLogout(idleLogout)
+                .fork(fork)
+                .systemPromptFile(systemPromptFile)
+                .appendSystemPromptFile(appendSystemPromptFile)
+                .mcpConfig(mcpConfig)
+                .agents(agents)
+                .pluginDir(pluginDir)
+                .displayLanguage(displayLanguage)
+                .sessionPath(sessionPath)
+                .autoSaveInterval(autoSaveInterval)
+                .agentsMdEnabled(agentsMdEnabled)
+                .agentsMdCreate(agentsMdCreate)
+                .agentsMdPath(agentsMdPath)
+                .agentsMdAutoUpdate(agentsMdAutoUpdate)
+                .maxTokens(maxTokens)
+                .compressionThreshold(compressionThreshold)
+                .summarizationThreshold(summarizationThreshold)
+                .skillSources(skillSources)
+                .installMissingSkills(installMissingSkills)
+                .provider(provider)
+                .apiKey(apiKey)
+                .baseUrl(baseUrl)
+                .autohandAIPlan(autohandAIPlan)
+                .features(features)
                 .options(options);
     }
 
@@ -115,6 +200,7 @@ public final class SDKConfig {
         args.add("--mode");
         args.add("rpc");
 
+        addFlag(args, "--bare", bare);
         addFlag(args, "--unrestricted", unrestricted);
         addFlag(args, "--auto-mode", autoMode);
         addFlag(args, "--auto-skill", autoSkill);
@@ -127,10 +213,33 @@ public final class SDKConfig {
         addFlag(args, "--persist-session", persistSession);
         addFlag(args, "--resume", resume);
         addFlag(args, "--continue", continueSession);
+        if (Boolean.FALSE.equals(idleLogout)) {
+            args.add("--no-idle-logout");
+        }
         addOption(args, "--session-id", sessionId);
+        addOption(args, "--fork", fork);
+        addOption(args, "--session-path", sessionPath);
+        addOption(args, "--auto-save-interval", autoSaveInterval);
+        if (Boolean.FALSE.equals(agentsMdEnabled)) {
+            args.add("--no-agents-md");
+        } else {
+            addFlag(args, "--agents-md", agentsMdEnabled);
+        }
+        addFlag(args, "--agents-md-create", agentsMdCreate);
+        addOption(args, "--agents-md-path", agentsMdPath);
+        addFlag(args, "--agents-md-auto-update", agentsMdAutoUpdate);
+        addOption(args, "--max-tokens", maxTokens);
+        addOption(args, "--compression-threshold", compressionThreshold);
+        addOption(args, "--summarization-threshold", summarizationThreshold);
+        addOption(args, "--display-language", displayLanguage);
         addOption(args, "--model", model);
         addOption(args, "--sys-prompt", systemPrompt);
         addOption(args, "--append-sys-prompt", appendSystemPrompt);
+        addOption(args, "--system-prompt-file", systemPromptFile);
+        addOption(args, "--append-system-prompt-file", appendSystemPromptFile);
+        addOption(args, "--mcp-config", mcpConfig);
+        addOption(args, "--agents", agents);
+        addOption(args, "--plugin-dir", pluginDir);
         addOption(args, "--max-iterations", maxIterations);
         addOption(args, "--max-runtime", maxRuntime);
         addOption(args, "--max-cost", maxCost);
@@ -146,6 +255,11 @@ public final class SDKConfig {
             args.add("--skills");
             args.add(String.join(",", skillNames));
         }
+        if (!skillSources.isEmpty()) {
+            args.add("--skill-sources");
+            args.add(skillSources.stream().map(SkillSource::cliValue).collect(java.util.stream.Collectors.joining(",")));
+        }
+        addFlag(args, "--install-missing-skills", installMissingSkills);
 
         for (String dir : additionalDirectories) {
             addOption(args, "--add-dir", dir);
@@ -201,6 +315,10 @@ public final class SDKConfig {
 
     public Map<String, String> environment() {
         return environment;
+    }
+
+    public FeatureFlagSettings features() {
+        return features;
     }
 
     private static Builder fromLegacy(String cwd, String cliPath, boolean debug, int timeoutMs, Object[] options) {
@@ -285,6 +403,31 @@ public final class SDKConfig {
         private Boolean persistSession;
         private Boolean resume;
         private Boolean continueSession;
+        private Boolean bare;
+        private Boolean idleLogout;
+        private String fork;
+        private String systemPromptFile;
+        private String appendSystemPromptFile;
+        private String mcpConfig;
+        private String agents;
+        private String pluginDir;
+        private String displayLanguage;
+        private String sessionPath;
+        private Integer autoSaveInterval;
+        private Boolean agentsMdEnabled;
+        private Boolean agentsMdCreate;
+        private String agentsMdPath;
+        private Boolean agentsMdAutoUpdate;
+        private Integer maxTokens;
+        private Double compressionThreshold;
+        private Double summarizationThreshold;
+        private final List<SkillSource> skillSources = new ArrayList<>();
+        private Boolean installMissingSkills;
+        private String provider;
+        private String apiKey;
+        private String baseUrl;
+        private String autohandAIPlan;
+        private FeatureFlagSettings features;
         private Object[] options = new Object[0];
 
         public Builder cwd(String cwd) {
@@ -454,6 +597,147 @@ public final class SDKConfig {
 
         public Builder continueSession(Boolean continueSession) {
             this.continueSession = continueSession;
+            return this;
+        }
+
+        public Builder bare(Boolean bare) {
+            this.bare = bare;
+            return this;
+        }
+
+        public Builder idleLogout(Boolean idleLogout) {
+            this.idleLogout = idleLogout;
+            return this;
+        }
+
+        public Builder fork(String fork) {
+            this.fork = fork;
+            return this;
+        }
+
+        public Builder systemPromptFile(String systemPromptFile) {
+            this.systemPromptFile = systemPromptFile;
+            return this;
+        }
+
+        public Builder appendSystemPromptFile(String appendSystemPromptFile) {
+            this.appendSystemPromptFile = appendSystemPromptFile;
+            return this;
+        }
+
+        public Builder mcpConfig(String mcpConfig) {
+            this.mcpConfig = mcpConfig;
+            return this;
+        }
+
+        public Builder agents(String agents) {
+            this.agents = agents;
+            return this;
+        }
+
+        public Builder pluginDir(String pluginDir) {
+            this.pluginDir = pluginDir;
+            return this;
+        }
+
+        public Builder displayLanguage(String displayLanguage) {
+            this.displayLanguage = displayLanguage;
+            return this;
+        }
+
+        public Builder sessionPath(String sessionPath) {
+            this.sessionPath = sessionPath;
+            return this;
+        }
+
+        public Builder autoSaveInterval(Integer autoSaveInterval) {
+            this.autoSaveInterval = autoSaveInterval;
+            return this;
+        }
+
+        public Builder agentsMdEnabled(Boolean agentsMdEnabled) {
+            this.agentsMdEnabled = agentsMdEnabled;
+            return this;
+        }
+
+        public Builder agentsMdCreate(Boolean agentsMdCreate) {
+            this.agentsMdCreate = agentsMdCreate;
+            return this;
+        }
+
+        public Builder agentsMdPath(String agentsMdPath) {
+            this.agentsMdPath = agentsMdPath;
+            return this;
+        }
+
+        public Builder agentsMdAutoUpdate(Boolean agentsMdAutoUpdate) {
+            this.agentsMdAutoUpdate = agentsMdAutoUpdate;
+            return this;
+        }
+
+        public Builder maxTokens(Integer maxTokens) {
+            this.maxTokens = maxTokens;
+            return this;
+        }
+
+        public Builder compressionThreshold(Double compressionThreshold) {
+            this.compressionThreshold = compressionThreshold;
+            return this;
+        }
+
+        public Builder summarizationThreshold(Double summarizationThreshold) {
+            this.summarizationThreshold = summarizationThreshold;
+            return this;
+        }
+
+        public Builder skillSources(List<SkillSource> skillSources) {
+            this.skillSources.clear();
+            if (skillSources != null) {
+                this.skillSources.addAll(skillSources);
+            }
+            return this;
+        }
+
+        public Builder addSkillSource(SkillSource skillSource) {
+            if (skillSource != null) {
+                this.skillSources.add(skillSource);
+            }
+            return this;
+        }
+
+        public Builder installMissingSkills(Boolean installMissingSkills) {
+            this.installMissingSkills = installMissingSkills;
+            return this;
+        }
+
+        /** Built-in provider ID or a custom provider ID such as {@code custom:acme}. */
+        public Builder provider(String provider) {
+            this.provider = provider;
+            return this;
+        }
+
+        public Builder provider(ProviderName provider) {
+            this.provider = provider == null ? null : provider.name().toLowerCase(java.util.Locale.ROOT);
+            return this;
+        }
+
+        public Builder apiKey(String apiKey) {
+            this.apiKey = apiKey;
+            return this;
+        }
+
+        public Builder baseUrl(String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public Builder autohandAIPlan(String autohandAIPlan) {
+            this.autohandAIPlan = autohandAIPlan;
+            return this;
+        }
+
+        public Builder features(FeatureFlagSettings features) {
+            this.features = features;
             return this;
         }
 

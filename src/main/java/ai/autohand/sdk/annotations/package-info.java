@@ -8,7 +8,7 @@
  *
  * <p>Usage example:</p>
  * <pre>{@code
- * @AutohandAgent(model = "fantail2", instructions = "Be concise")
+ * @AutohandAgent(model = "fantail", instructions = "Be concise")
  * @Skills({"typescript", "testing"})
  * @Permission(PermissionMode.INTERACTIVE)
  * @EnableTools({Tool.READ_FILE, Tool.RUN_COMMAND})

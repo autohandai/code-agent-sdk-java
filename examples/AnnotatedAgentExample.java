@@ -13,7 +13,7 @@ import ai.autohand.sdk.types.*;
  *   AUTOHAND_CLI_PATH=/path/to/autohand mvn compile exec:java -Dexec.mainClass="AnnotatedAgentExample"
  */
 @AutohandAgent(
-    model = "fantail2",
+    model = "fantail",
     instructions = "You are a concise code reviewer. Prefer small, typed, composable interfaces."
 )
 @Skills({"typescript", "testing"})

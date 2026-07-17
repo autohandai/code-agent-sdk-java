@@ -28,8 +28,22 @@ public enum HookEvent {
     AUTOMODE_CANCEL,
     AUTOMODE_COMPLETE,
     AUTOMODE_ERROR,
+    AUTORESEARCH_START,
+    AUTORESEARCH_PAUSE,
+    AUTORESEARCH_INIT,
+    AUTORESEARCH_BEFORE,
+    AUTORESEARCH_RUN,
+    AUTORESEARCH_AFTER,
+    AUTORESEARCH_LOG,
+    AUTORESEARCH_DECISION,
+    AUTORESEARCH_REPLAY,
+    AUTORESEARCH_RESCORE,
+    AUTORESEARCH_PRUNE,
+    AUTORESEARCH_COMPLETE,
+    AUTORESEARCH_ERROR,
     PRE_LEARN,
     POST_LEARN,
+    GOAL_WRITTEN_COMPLETED,
     TEAM_CREATED,
     TEAMMATE_SPAWNED,
     TEAMMATE_IDLE,
@@ -72,6 +86,12 @@ public enum HookEvent {
         // Automode events use colon separator
         if (raw.startsWith("automode-")) {
             return raw.replaceFirst("automode-", "automode:");
+        }
+        if (raw.startsWith("autoresearch-")) {
+            return raw.replaceFirst("autoresearch-", "autoresearch:");
+        }
+        if (raw.equals("goal-written-completed")) {
+            return "goal-written:completed";
         }
         // Review events use colon separator
         if (raw.startsWith("review-")) {

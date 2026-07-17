@@ -8,6 +8,7 @@ target/
 *.log
 .DS_Store
 .vscode/
+.autohand/
 *.swp
 *.swo
 *~

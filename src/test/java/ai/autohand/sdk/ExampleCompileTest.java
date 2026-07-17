@@ -27,7 +27,7 @@ class ExampleCompileTest {
                     .toList();
         }
 
-        assertEquals(29, examples.size(), "Keep this aligned with the TypeScript example set.");
+        assertEquals(30, examples.size(), "Keep the published Java example inventory intentional.");
 
         var compiler = ToolProvider.getSystemJavaCompiler();
         assertNotNull(compiler, "Run tests with a JDK, not a JRE.");

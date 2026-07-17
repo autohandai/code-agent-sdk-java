@@ -13,9 +13,11 @@ public enum ProviderName {
     LLMGATEWAY,
     AZURE,
     ZAI,
+    SAKANA,
     XAI,
     CEREBRAS,
     DEEPSEEK,
     VERTEXAI,
-    NVIDIA
+    NVIDIA,
+    BEDROCK
 }

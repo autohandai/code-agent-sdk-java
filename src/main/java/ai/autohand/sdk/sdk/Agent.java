@@ -4,6 +4,8 @@ import ai.autohand.sdk.types.DecisionScope;
 import ai.autohand.sdk.types.PermissionDecision;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.SDKConfig;
+import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.Goals;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,6 +45,92 @@ public final class Agent implements AutoCloseable {
 
     public Run send(String prompt) {
         return new Run(sdk, prompt);
+    }
+
+    public Run command(String command, String arguments) {
+        String normalized = command.startsWith("/") ? command : "/" + command;
+        String suffix = arguments == null || arguments.isBlank() ? "" : " " + arguments.trim();
+        return send(normalized + suffix);
+    }
+
+    public Run deepResearch(String topic) {
+        return command("/deep-research", topic);
+    }
+
+    public Run autoresearch(String objective) {
+        return command("/autoresearch", objective);
+    }
+
+    public boolean supportsCommand(String command) {
+        return sdk.supportsCommand(command);
+    }
+
+    public Goals.SnapshotResult getGoal() {
+        return sdk.getGoal();
+    }
+
+    public Goals.MutationResult createGoal(Goals.CreateParams params) {
+        return sdk.createGoal(params);
+    }
+
+    public Goals.MutationResult updateGoal(Goals.UpdateParams params) {
+        return sdk.updateGoal(params);
+    }
+
+    public Goals.MutationResult clearGoal() {
+        return sdk.clearGoal();
+    }
+
+    public Goals.MutationResult queueGoal(Goals.CreateParams params) {
+        return sdk.queueGoal(params);
+    }
+
+    public Goals.MutationResult startQueuedGoal() {
+        return sdk.startQueuedGoal();
+    }
+
+    public Goals.TemplatesResult listGoalTemplates() {
+        return sdk.listGoalTemplates();
+    }
+
+    public Autoresearch.StartResult startAutoresearch(Autoresearch.StartParams params) {
+        return sdk.startAutoresearch(params);
+    }
+
+    public Autoresearch.StatusResult getAutoresearchStatus() {
+        return sdk.getAutoresearchStatus();
+    }
+
+    public Autoresearch.StopResult stopAutoresearch() {
+        return sdk.stopAutoresearch();
+    }
+
+    public Autoresearch.HistoryResult getAutoresearchHistory() {
+        return sdk.getAutoresearchHistory();
+    }
+
+    public Autoresearch.ReplayResult replayAutoresearch(Autoresearch.ReplayParams params) {
+        return sdk.replayAutoresearch(params);
+    }
+
+    public Autoresearch.RescoreResult rescoreAutoresearch(Autoresearch.RescoreParams params) {
+        return sdk.rescoreAutoresearch(params);
+    }
+
+    public Autoresearch.CompareResult compareAutoresearch(Autoresearch.CompareParams params) {
+        return sdk.compareAutoresearch(params);
+    }
+
+    public Autoresearch.ParetoResult getAutoresearchPareto() {
+        return sdk.getAutoresearchPareto();
+    }
+
+    public Autoresearch.PinResult pinAutoresearch(Autoresearch.PinParams params) {
+        return sdk.pinAutoresearch(params);
+    }
+
+    public Autoresearch.PruneResult pruneAutoresearch(Autoresearch.PruneParams params) {
+        return sdk.pruneAutoresearch(params);
     }
 
     public RunResult run(String prompt) {

@@ -21,6 +21,11 @@ Agent agent = Agent.create(AgentOptions.builder()
 - `agent.runJson(String prompt, Class<T> type, String schemaName, Object schema, Map<String, Object> options)`: appends JSON output instructions and parses the final output.
 - `agent.allowPermission(String requestId, DecisionScope scope)`: approves a permission request.
 - `agent.denyPermission(String requestId, DecisionScope scope)`: denies a permission request.
+- `agent.command(String command, String arguments)`: sends a slash command.
+- `agent.deepResearch(String topic)`, `agent.autoresearch(String objective)`: current CLI command helpers.
+- `agent.supportsCommand(String command)`: checks the connected CLI surface.
+- Typed autoresearch lifecycle and ledger methods listed below are also available on `Agent`.
+- Typed persistent-goal methods listed below are also available on `Agent`.
 - `agent.close()`: stops the session.
 
 ### Run
@@ -61,6 +66,13 @@ sdk.stop();
 - `applyFlagSettings(Map<String, Object> settings)`
 - `supportedModels()`: returns `List<ModelInfo>`
 - `supportedCommands()`: returns `List<String>`
+- `supportsCommand(String command)`
+- `getGoal()`, `createGoal(Goals.CreateParams params)`, `updateGoal(Goals.UpdateParams params)`
+- `clearGoal()`, `queueGoal(Goals.CreateParams params)`, `startQueuedGoal()`, `listGoalTemplates()`
+- `startAutoresearch(Autoresearch.StartParams params)`
+- `getAutoresearchStatus()`, `stopAutoresearch()`, `getAutoresearchHistory()`
+- `replayAutoresearch(...)`, `rescoreAutoresearch(...)`, `compareAutoresearch(...)`
+- `getAutoresearchPareto()`, `pinAutoresearch(...)`, `pruneAutoresearch(...)`
 - `getState()`, `getMessages()`
 - `getContextUsage()`: returns `ContextUsage`
 - `accountInfo()`, `getAccountInfo()`: returns `AccountInfo`
@@ -74,6 +86,9 @@ sdk.stop();
 - `allowPermission(String requestId, DecisionScope scope)`
 - `denyPermission(String requestId, DecisionScope scope)`
 - `permissionResponse(PermissionResponseParams params)`
+
+`Goals.NullableUpdate.unchanged()`, `.set(value)`, and `.clear()` preserve the
+CLI's omitted/value/JSON-null distinction for mutable goal budgets.
 
 ## Events
 
@@ -92,6 +107,8 @@ Events implement the `Event` marker interface and are exposed as records under
 - `ToolEndEvent`
 - `PermissionRequestEvent`
 - `FileModifiedEvent`
+- `AutoresearchLifecycleEvent`
+- `AutoresearchOperationEvent`
 - `ErrorEvent`
 - `UnknownEvent`
 
