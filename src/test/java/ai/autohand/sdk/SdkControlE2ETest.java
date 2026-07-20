@@ -234,6 +234,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedPreToolHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookPreToolEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookPreToolEvent.class::isInstance)
+                    .map(Events.HookPreToolEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("read_file", event.toolName());
+            assertEquals("README.md", event.args().get("path"));
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

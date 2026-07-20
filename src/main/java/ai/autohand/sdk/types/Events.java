@@ -3,6 +3,9 @@ package ai.autohand.sdk.types;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 
 /** Concrete event records emitted by the SDK. */
 public final class Events {
@@ -114,6 +117,19 @@ public final class Events {
     }
 
     public record AutoModeErrorEvent(String sessionId, String error, String timestamp) implements Event {
+    }
+
+    public record HookPreToolEvent(
+            String toolId,
+            String toolName,
+            Map<String, Object> args,
+            String timestamp
+    ) implements Event {
+        public HookPreToolEvent {
+            args = args == null
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(args));
+        }
     }
 
     public record ErrorEvent(int code, String message, String timestamp) implements Event {

@@ -53,6 +53,11 @@ public final class FakeAutohandCli {
                                 "sessionId", "auto-session-failed",
                                 "error", "Iteration failed",
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.preTool", Map.of(
+                                "toolId", "tool-call-1",
+                                "toolName", "read_file",
+                                "args", Map.of("path", "README.md"),
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",

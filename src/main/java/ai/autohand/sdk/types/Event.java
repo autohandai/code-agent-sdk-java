@@ -9,5 +9,6 @@ public sealed interface Event permits Events.AgentStartEvent, Events.AgentEndEve
         Events.AutoresearchOperationEvent, Events.AutoModeIterationEvent,
         Events.AutoModeCompleteEvent,
         Events.AutoModeErrorEvent,
+        Events.HookPreToolEvent,
         Events.ErrorEvent, Events.UnknownEvent {
 }

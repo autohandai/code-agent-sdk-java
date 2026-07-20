@@ -630,6 +630,11 @@ public final class RPCClient {
                     text(params, "sessionId", null),
                     text(params, "error", null),
                     timestamp);
+            case "autohand.hook.preTool" -> new Events.HookPreToolEvent(
+                    text(params, "toolId", null),
+                    text(params, "toolName", null),
+                    MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { }),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),
