@@ -193,6 +193,15 @@ public final class FakeAutohandCli {
                                 && tool.path("inputSchema").path("required").size() == 1;
                         respond(id, Map.of("success", exact));
                     }
+                    case "autohand.mcp.invokeResponse" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 3
+                                && "mcp-request-1".equals(params.path("requestId").asText())
+                                && params.path("success").asBoolean()
+                                && "issue-42".equals(params.path("result").asText())
+                                && !params.has("error");
+                        respond(id, Map.of("success", exact));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

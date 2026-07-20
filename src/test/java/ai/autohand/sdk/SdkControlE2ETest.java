@@ -10,6 +10,7 @@ import ai.autohand.sdk.types.SessionDetails;
 import ai.autohand.sdk.types.SessionAttachment;
 import ai.autohand.sdk.types.YoloMode;
 import ai.autohand.sdk.types.VscodeMcpTools;
+import ai.autohand.sdk.types.McpInvocationResponse;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -117,6 +118,16 @@ class SdkControlE2ETest {
                     Map.of("query", Map.of("type", "string")), List.of("query"));
             VscodeMcpTools.Result result = sdk.setVscodeMcpTools(new VscodeMcpTools.Params(List.of(
                     new VscodeMcpTools.Tool("search", "Search issues", "github", schema))));
+
+            assertTrue(result.success());
+        }
+    }
+
+    @Test
+    void respondsToMcpInvocationThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            McpInvocationResponse.Result result = sdk.respondMcpInvocation(
+                    new McpInvocationResponse.Params("mcp-request-1", true, "issue-42", null));
 
             assertTrue(result.success());
         }
