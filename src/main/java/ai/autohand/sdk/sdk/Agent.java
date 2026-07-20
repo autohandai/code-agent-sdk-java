@@ -5,6 +5,7 @@ import ai.autohand.sdk.types.PermissionDecision;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.SDKConfig;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.AutoMode;
 import ai.autohand.sdk.types.BrowserHandoff;
 import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Conversation;
@@ -158,6 +159,10 @@ public final class Agent implements AutoCloseable {
 
     public BrowserHandoff.AttachResult attachLatestBrowserHandoff() {
         return sdk.attachLatestBrowserHandoff();
+    }
+
+    public AutoMode.StartResult startAutoMode(AutoMode.StartParams params) {
+        return sdk.startAutoMode(params);
     }
 
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {

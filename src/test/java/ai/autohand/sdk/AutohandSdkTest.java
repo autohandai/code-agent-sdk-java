@@ -9,6 +9,7 @@ import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.transport.TransportConfig;
 import ai.autohand.sdk.types.ContextUsage;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.AutoMode;
 import ai.autohand.sdk.types.BrowserHandoff;
 import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Conversation;
@@ -224,6 +225,22 @@ class AutohandSdkTest {
             assertTrue(result.success());
             assertEquals("latest-session", result.sessionId());
             assertEquals(5, result.messageCount());
+        }
+    }
+
+    @Test
+    void startsAutoModeWithExactCamelCaseParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            AutoMode.StartResult result = sdk.startAutoMode(new AutoMode.StartParams(
+                    "Ship the SDK", 8, "DONE", true, 2, 600, 4.5));
+
+            assertTrue(result.success());
+            assertEquals("auto-session", result.sessionId());
         }
     }
 

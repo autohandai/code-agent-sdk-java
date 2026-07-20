@@ -7,6 +7,7 @@ import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.AutoMode;
 import ai.autohand.sdk.types.BrowserHandoff;
 import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Conversation;
@@ -177,6 +178,10 @@ public final class RPCClient {
 
     public BrowserHandoff.AttachResult attachLatestBrowserHandoff() {
         return request("autohand.browserHandoff.attachLatest", Map.of(), BrowserHandoff.AttachResult.class);
+    }
+
+    public AutoMode.StartResult startAutoMode(AutoMode.StartParams params) {
+        return request("autohand.automode.start", params, AutoMode.StartResult.class);
     }
 
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {

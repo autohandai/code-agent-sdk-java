@@ -285,6 +285,18 @@ public final class FakeAutohandCli {
                             "sessionId", "latest-session",
                             "workspaceRoot", "/workspace",
                             "messageCount", 5));
+                    case "autohand.automode.start" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 7
+                                && params.path("prompt").asText().equals("Ship the SDK")
+                                && params.path("maxIterations").asInt() == 8
+                                && params.path("completionPromise").asText().equals("DONE")
+                                && params.path("useWorktree").asBoolean()
+                                && params.path("checkpointInterval").asInt() == 2
+                                && params.path("maxRuntime").asInt() == 600
+                                && params.path("maxCost").asDouble() == 4.5;
+                        respond(id, Map.of("success", exact, "sessionId", "auto-session"));
+                    }
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

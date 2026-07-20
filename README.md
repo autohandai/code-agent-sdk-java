@@ -122,6 +122,7 @@ Use `reset()` to replace the active conversation and receive its new session ID.
 Create an expiring browser attachment URL with `createBrowserHandoff(...)`.
 Attach one by token with `attachBrowserHandoff(...)`.
 Use `attachLatestBrowserHandoff()` when the newest handoff should be selected automatically.
+Start a bounded autonomous run with typed limits through `startAutoMode(...)`.
 
 For JSON output:
 
