@@ -6,6 +6,7 @@ import ai.autohand.sdk.types.DirectoryAccessResponse;
 import ai.autohand.sdk.types.DirectoryAccessAcknowledgement;
 import ai.autohand.sdk.types.ChangesDecision;
 import ai.autohand.sdk.types.SessionHistory;
+import ai.autohand.sdk.types.SessionDetails;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,6 +16,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class SdkControlE2ETest {
     @TempDir
@@ -65,6 +68,19 @@ class SdkControlE2ETest {
 
             assertTrue(result.sessions().getFirst().status() == SessionHistory.Status.COMPLETED);
             assertTrue(result.sessions().getFirst().messageCount() == 7);
+        }
+    }
+
+    @Test
+    void getsDiscriminatedSessionDetailsThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            SessionDetails.Success loaded = assertInstanceOf(
+                    SessionDetails.Success.class, sdk.getSession("session-details-1"));
+            SessionDetails.Failure missing = assertInstanceOf(
+                    SessionDetails.Failure.class, sdk.getSession("missing-session"));
+
+            assertEquals("done", loaded.messages().getFirst().content());
+            assertEquals("Session not found", missing.error());
         }
     }
 

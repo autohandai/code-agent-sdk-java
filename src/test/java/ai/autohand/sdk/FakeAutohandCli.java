@@ -136,6 +136,30 @@ public final class FakeAutohandCli {
                                 "totalPages", 3,
                                 "totalItems", 51));
                     }
+                    case "autohand.getSession" -> {
+                        JsonNode params = request.path("params");
+                        String sessionId = params.path("sessionId").asText();
+                        if (params.size() != 1 || "missing-session".equals(sessionId)) {
+                            respond(id, Map.of("success", false, "error", "Session not found"));
+                        } else {
+                            respond(id, Map.ofEntries(
+                                    Map.entry("success", true),
+                                    Map.entry("sessionId", sessionId),
+                                    Map.entry("projectName", "java-sdk"),
+                                    Map.entry("model", "fantail"),
+                                    Map.entry("messageCount", 1),
+                                    Map.entry("status", "completed"),
+                                    Map.entry("createdAt", "2026-07-20T00:00:00Z"),
+                                    Map.entry("lastActiveAt", "2026-07-20T00:10:00Z"),
+                                    Map.entry("summary", "Session summary"),
+                                    Map.entry("messages", List.of(Map.of(
+                                            "id", "message-1",
+                                            "role", "assistant",
+                                            "content", "done",
+                                            "timestamp", "2026-07-20T00:10:00Z"))),
+                                    Map.entry("workspaceRoot", "/workspace")));
+                        }
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

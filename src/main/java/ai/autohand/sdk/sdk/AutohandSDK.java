@@ -498,6 +498,16 @@ public final class AutohandSDK implements AutoCloseable {
                 SessionHistory.Result.class);
     }
 
+    public SessionDetails.Result getSession(String sessionId) {
+        ensureStarted();
+        JsonNode result = client.request("autohand.getSession", new SessionDetails.Params(sessionId));
+        if (result.path("success").asBoolean(false)) {
+            return RPCClient.convert(result, SessionDetails.Success.class);
+        }
+        return new SessionDetails.Failure(false,
+                result.hasNonNull("error") ? result.get("error").asText() : null);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
