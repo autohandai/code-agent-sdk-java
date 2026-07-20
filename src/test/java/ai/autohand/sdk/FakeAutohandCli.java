@@ -49,6 +49,10 @@ public final class FakeAutohandCli {
                                 "filesCreated", 2,
                                 "filesModified", 5,
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.automode.error", Map.of(
+                                "sessionId", "auto-session-failed",
+                                "error", "Iteration failed",
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",

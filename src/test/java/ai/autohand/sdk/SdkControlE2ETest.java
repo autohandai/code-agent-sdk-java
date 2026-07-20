@@ -221,6 +221,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedAutoModeErrorEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.AutoModeErrorEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.AutoModeErrorEvent.class::isInstance)
+                    .map(Events.AutoModeErrorEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("auto-session-failed", event.sessionId());
+            assertEquals("Iteration failed", event.error());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

@@ -113,6 +113,9 @@ public final class Events {
     ) implements Event {
     }
 
+    public record AutoModeErrorEvent(String sessionId, String error, String timestamp) implements Event {
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 

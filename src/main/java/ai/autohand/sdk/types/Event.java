@@ -8,5 +8,6 @@ public sealed interface Event permits Events.AgentStartEvent, Events.AgentEndEve
         Events.FileModifiedEvent, Events.AutoresearchLifecycleEvent,
         Events.AutoresearchOperationEvent, Events.AutoModeIterationEvent,
         Events.AutoModeCompleteEvent,
+        Events.AutoModeErrorEvent,
         Events.ErrorEvent, Events.UnknownEvent {
 }

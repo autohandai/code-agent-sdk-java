@@ -626,6 +626,10 @@ public final class RPCClient {
                     params.path("filesCreated").asInt(0),
                     params.path("filesModified").asInt(0),
                     timestamp);
+            case "autohand.automode.error" -> new Events.AutoModeErrorEvent(
+                    text(params, "sessionId", null),
+                    text(params, "error", null),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),
