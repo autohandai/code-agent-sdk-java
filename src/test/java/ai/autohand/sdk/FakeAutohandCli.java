@@ -280,6 +280,11 @@ public final class FakeAutohandCli {
                                 "workspaceRoot", "/workspace",
                                 "messageCount", 3));
                     }
+                    case "autohand.browserHandoff.attachLatest" -> respond(id, Map.of(
+                            "success", request.path("params").isEmpty(),
+                            "sessionId", "latest-session",
+                            "workspaceRoot", "/workspace",
+                            "messageCount", 5));
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

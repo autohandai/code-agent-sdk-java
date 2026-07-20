@@ -78,6 +78,7 @@ sdk.stop();
 - `reset()`: replaces the active conversation and returns its new session ID.
 - `createBrowserHandoff(BrowserHandoff.CreateParams params)`: creates an expiring browser attachment URL.
 - `attachBrowserHandoff(BrowserHandoff.AttachParams params)`: attaches a handoff by token.
+- `attachLatestBrowserHandoff()`: attaches the newest available browser handoff.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

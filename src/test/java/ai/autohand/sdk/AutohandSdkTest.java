@@ -212,6 +212,22 @@ class AutohandSdkTest {
     }
 
     @Test
+    void attachesLatestBrowserHandoffWithExactEmptyParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            BrowserHandoff.AttachResult result = sdk.attachLatestBrowserHandoff();
+
+            assertTrue(result.success());
+            assertEquals("latest-session", result.sessionId());
+            assertEquals(5, result.messageCount());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

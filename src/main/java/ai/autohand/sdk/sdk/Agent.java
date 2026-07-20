@@ -156,6 +156,10 @@ public final class Agent implements AutoCloseable {
         return sdk.attachBrowserHandoff(params);
     }
 
+    public BrowserHandoff.AttachResult attachLatestBrowserHandoff() {
+        return sdk.attachLatestBrowserHandoff();
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return sdk.getSkillsRegistry(params);
     }

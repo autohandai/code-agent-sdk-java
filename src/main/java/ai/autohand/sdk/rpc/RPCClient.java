@@ -175,6 +175,10 @@ public final class RPCClient {
         return request("autohand.browserHandoff.attach", params, BrowserHandoff.AttachResult.class);
     }
 
+    public BrowserHandoff.AttachResult attachLatestBrowserHandoff() {
+        return request("autohand.browserHandoff.attachLatest", Map.of(), BrowserHandoff.AttachResult.class);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
                 CommunitySkills.RegistryResult.class);
