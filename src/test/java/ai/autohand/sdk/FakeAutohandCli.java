@@ -89,6 +89,11 @@ public final class FakeAutohandCli {
                                 "timestamp", Instant.now().toString()));
                         respond(id, Map.of("success", true));
                     }
+                    case "autohand.permissionAcknowledged" -> {
+                        JsonNode params = request.path("params");
+                        respond(id, Map.of("success", params.size() == 1
+                                && "permission-1".equals(params.path("requestId").asText())));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

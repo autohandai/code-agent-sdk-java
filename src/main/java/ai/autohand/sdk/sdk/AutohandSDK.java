@@ -464,6 +464,13 @@ public final class AutohandSDK implements AutoCloseable {
         permissionResponse(new PermissionResponseParams(requestId, decision, null, null, null));
     }
 
+    public PermissionAcknowledgement.Result acknowledgePermission(String requestId) {
+        ensureStarted();
+        return RPCClient.convert(
+                client.request("autohand.permissionAcknowledged", new PermissionAcknowledgement.Params(requestId)),
+                PermissionAcknowledgement.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
