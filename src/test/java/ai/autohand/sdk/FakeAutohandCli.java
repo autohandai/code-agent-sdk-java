@@ -234,6 +234,19 @@ public final class FakeAutohandCli {
                                 "skillName", "java-sdk-learning",
                                 "skillPath", ".agents/skills/java-sdk-learning"));
                     }
+                    case "autohand.getToolsRegistry" -> respond(id, Map.of(
+                            "tools", List.of(Map.ofEntries(
+                                    Map.entry("name", "read_file"),
+                                    Map.entry("description", "Read a file"),
+                                    Map.entry("requiresApproval", false),
+                                    Map.entry("source", "builtin"),
+                                    Map.entry("scope", "project"),
+                                    Map.entry("disabled", false),
+                                    Map.entry("schemaVersion", 1),
+                                    Map.entry("reuseHint", "Reuse read results"))),
+                            "diagnostics", request.path("params").isEmpty()
+                                    ? List.of(Map.of("file", "broken-tool.json", "reason", "Invalid schema"))
+                                    : List.of()));
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

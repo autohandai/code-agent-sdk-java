@@ -14,6 +14,7 @@ import ai.autohand.sdk.types.McpInvocationResponse;
 import ai.autohand.sdk.types.LearnRecommendation;
 import ai.autohand.sdk.types.LearnUpdate;
 import ai.autohand.sdk.types.LearnGeneration;
+import ai.autohand.sdk.types.ToolsRegistry;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -165,6 +166,17 @@ class SdkControlE2ETest {
 
             assertTrue(result.success());
             assertEquals("java-sdk-learning", result.skillName());
+        }
+    }
+
+    @Test
+    void getsTypedToolsRegistryThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            ToolsRegistry.Result result = sdk.getToolsRegistry();
+
+            assertEquals(ToolsRegistry.Source.BUILTIN, result.tools().getFirst().source());
+            assertEquals(ToolsRegistry.Scope.PROJECT, result.tools().getFirst().scope());
+            assertEquals("Invalid schema", result.diagnostics().getFirst().reason());
         }
     }
 
