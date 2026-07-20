@@ -11,6 +11,7 @@ import ai.autohand.sdk.types.SessionAttachment;
 import ai.autohand.sdk.types.YoloMode;
 import ai.autohand.sdk.types.VscodeMcpTools;
 import ai.autohand.sdk.types.McpInvocationResponse;
+import ai.autohand.sdk.types.LearnRecommendation;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -130,6 +131,17 @@ class SdkControlE2ETest {
                     new McpInvocationResponse.Params("mcp-request-1", true, "issue-42", null));
 
             assertTrue(result.success());
+        }
+    }
+
+    @Test
+    void getsProjectLearningRecommendationsThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            LearnRecommendation.Result result = sdk.recommendLearn(new LearnRecommendation.Params(true));
+
+            assertTrue(result.success());
+            assertEquals(LearnRecommendation.AuditStatus.OUTDATED, result.audit().getFirst().status());
+            assertEquals("java-21", result.recommendations().getFirst().slug());
         }
     }
 

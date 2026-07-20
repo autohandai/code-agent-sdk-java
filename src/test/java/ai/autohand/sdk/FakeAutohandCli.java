@@ -202,6 +202,22 @@ public final class FakeAutohandCli {
                                 && !params.has("error");
                         respond(id, Map.of("success", exact));
                     }
+                    case "autohand.learn.recommend" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 1 && params.path("deep").asBoolean();
+                        respond(id, Map.of(
+                                "success", exact,
+                                "projectSummary", "Java SDK project",
+                                "audit", List.of(Map.of(
+                                        "skill", "legacy-java",
+                                        "status", "outdated",
+                                        "reason", "Uses Java 17")),
+                                "recommendations", List.of(Map.of(
+                                        "slug", "java-21",
+                                        "score", 0.98,
+                                        "reason", "Uses records")),
+                                "gapAnalysis", "Add virtual-thread guidance"));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

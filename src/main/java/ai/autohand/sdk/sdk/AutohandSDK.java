@@ -535,6 +535,13 @@ public final class AutohandSDK implements AutoCloseable {
         return client.request("autohand.mcp.invokeResponse", params, McpInvocationResponse.Result.class);
     }
 
+    public LearnRecommendation.Result recommendLearn(LearnRecommendation.Params params) {
+        ensureStarted();
+        return client.request("autohand.learn.recommend",
+                params == null ? LearnRecommendation.Params.standard() : params,
+                LearnRecommendation.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
