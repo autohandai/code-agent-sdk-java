@@ -12,6 +12,7 @@ import ai.autohand.sdk.types.YoloMode;
 import ai.autohand.sdk.types.VscodeMcpTools;
 import ai.autohand.sdk.types.McpInvocationResponse;
 import ai.autohand.sdk.types.LearnRecommendation;
+import ai.autohand.sdk.types.LearnUpdate;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -142,6 +143,17 @@ class SdkControlE2ETest {
             assertTrue(result.success());
             assertEquals(LearnRecommendation.AuditStatus.OUTDATED, result.audit().getFirst().status());
             assertEquals("java-21", result.recommendations().getFirst().slug());
+        }
+    }
+
+    @Test
+    void updatesProjectLearningThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            LearnUpdate.Result result = sdk.updateLearn();
+
+            assertTrue(result.success());
+            assertEquals(LearnUpdate.Status.UPDATED, result.results().getFirst().status());
+            assertEquals(1, result.unchanged());
         }
     }
 

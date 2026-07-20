@@ -218,6 +218,13 @@ public final class FakeAutohandCli {
                                         "reason", "Uses records")),
                                 "gapAnalysis", "Add virtual-thread guidance"));
                     }
+                    case "autohand.learn.update" -> respond(id, Map.of(
+                            "success", request.path("params").isEmpty(),
+                            "updated", 1,
+                            "unchanged", 1,
+                            "results", List.of(
+                                    Map.of("name", "java-21", "status", "updated"),
+                                    Map.of("name", "testing", "status", "unchanged"))));
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",
