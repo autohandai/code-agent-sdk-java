@@ -124,6 +124,7 @@ Attach one by token with `attachBrowserHandoff(...)`.
 Use `attachLatestBrowserHandoff()` when the newest handoff should be selected automatically.
 Start a bounded autonomous run with typed limits through `startAutoMode(...)`.
 Inspect progress and checkpoint metadata with `getAutoModeStatus()`.
+Pause an active autonomous run with `pauseAutoMode()`.
 
 For JSON output:
 

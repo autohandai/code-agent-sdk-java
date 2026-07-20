@@ -263,6 +263,21 @@ class AutohandSdkTest {
     }
 
     @Test
+    void pausesAutoModeWithExactEmptyParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            AutoMode.OperationResult result = sdk.pauseAutoMode();
+
+            assertTrue(result.success());
+            assertEquals(null, result.error());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

@@ -188,6 +188,10 @@ public final class RPCClient {
         return request("autohand.automode.status", Map.of(), AutoMode.StatusResult.class);
     }
 
+    public AutoMode.OperationResult pauseAutoMode() {
+        return request("autohand.automode.pause", Map.of(), AutoMode.OperationResult.class);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
                 CommunitySkills.RegistryResult.class);

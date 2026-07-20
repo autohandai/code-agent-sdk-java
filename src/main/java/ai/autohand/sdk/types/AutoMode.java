@@ -66,4 +66,7 @@ public final class AutoMode {
 
     public record StatusResult(boolean active, boolean paused, State state) {
     }
+
+    public record OperationResult(boolean success, String error) {
+    }
 }

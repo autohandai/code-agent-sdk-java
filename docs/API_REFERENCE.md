@@ -81,6 +81,7 @@ sdk.stop();
 - `attachLatestBrowserHandoff()`: attaches the newest available browser handoff.
 - `startAutoMode(AutoMode.StartParams params)`: starts a bounded autonomous run.
 - `getAutoModeStatus()`: returns typed run state, file counts, branch, and checkpoint metadata.
+- `pauseAutoMode()`: pauses the active autonomous run.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`
