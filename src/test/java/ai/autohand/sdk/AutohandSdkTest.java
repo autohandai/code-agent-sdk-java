@@ -293,6 +293,22 @@ class AutohandSdkTest {
     }
 
     @Test
+    void cancelsAutoModeWithExactOptionalReason() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            AutoMode.OperationResult result = sdk.cancelAutoMode(
+                    new AutoMode.CancelParams("Operator requested stop"));
+
+            assertTrue(result.success());
+            assertEquals(null, result.error());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

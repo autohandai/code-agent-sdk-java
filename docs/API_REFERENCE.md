@@ -83,6 +83,7 @@ sdk.stop();
 - `getAutoModeStatus()`: returns typed run state, file counts, branch, and checkpoint metadata.
 - `pauseAutoMode()`: pauses the active autonomous run.
 - `resumeAutoMode()`: resumes the paused autonomous run.
+- `cancelAutoMode(AutoMode.CancelParams params)`: cancels a run with an optional reason.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

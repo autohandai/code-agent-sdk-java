@@ -196,6 +196,12 @@ public final class RPCClient {
         return request("autohand.automode.resume", Map.of(), AutoMode.OperationResult.class);
     }
 
+    public AutoMode.OperationResult cancelAutoMode(AutoMode.CancelParams params) {
+        return request("autohand.automode.cancel",
+                params == null ? AutoMode.CancelParams.withoutReason() : params,
+                AutoMode.OperationResult.class);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
                 CommunitySkills.RegistryResult.class);

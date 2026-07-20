@@ -69,4 +69,10 @@ public final class AutoMode {
 
     public record OperationResult(boolean success, String error) {
     }
+
+    public record CancelParams(String reason) {
+        public static CancelParams withoutReason() {
+            return new CancelParams(null);
+        }
+    }
 }

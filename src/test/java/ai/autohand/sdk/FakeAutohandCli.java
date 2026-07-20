@@ -316,6 +316,12 @@ public final class FakeAutohandCli {
                             "success", request.path("params").isEmpty()));
                     case "autohand.automode.resume" -> respond(id, Map.of(
                             "success", request.path("params").isEmpty()));
+                    case "autohand.automode.cancel" -> {
+                        JsonNode params = request.path("params");
+                        respond(id, Map.of(
+                                "success", params.size() == 1
+                                        && params.path("reason").asText().equals("Operator requested stop")));
+                    }
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(
