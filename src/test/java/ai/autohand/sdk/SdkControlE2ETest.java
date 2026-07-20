@@ -256,7 +256,7 @@ class SdkControlE2ETest {
                     .findFirst().orElseThrow();
 
             assertTrue(event.success());
-            assertEquals(18L, event.duration());
+            assertEquals(18.0, event.duration());
             assertEquals("contents", event.output());
         }
     }
@@ -284,7 +284,7 @@ class SdkControlE2ETest {
 
             assertEquals(Events.TokenUsageStatus.ACTUAL, event.tokensUsageStatus());
             assertEquals(2, event.toolCallsCount());
-            assertEquals(250L, event.duration());
+            assertEquals(250.0, event.duration());
         }
     }
 
@@ -311,6 +311,69 @@ class SdkControlE2ETest {
 
             assertEquals("vscode__github__search", event.tools().getFirst().name());
             assertEquals("github", event.tools().getFirst().serverName());
+        }
+    }
+
+    @Test
+    void streamsTypedLearningProgressEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.LearnProgressEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.LearnProgressEvent.class::isInstance)
+                    .map(Events.LearnProgressEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(Events.LearnProgressStatus.LOADING_REGISTRY, event.status());
+        }
+    }
+
+    @Test
+    void mapsMalformedKnownNotificationsToRawUnknownEvents() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            List<Event> events = new ArrayList<>();
+            sdk.streamPrompt(new PromptParams("malformed-feature-event"), events::add);
+
+            List<Class<? extends Event>> typedEventTypes = List.of(
+                    Events.AutoModeIterationEvent.class,
+                    Events.AutoModeCompleteEvent.class,
+                    Events.AutoModeErrorEvent.class,
+                    Events.HookPreToolEvent.class,
+                    Events.HookPostToolEvent.class,
+                    Events.HookPrePromptEvent.class,
+                    Events.HookPostResponseEvent.class,
+                    Events.McpInvocationRequestEvent.class,
+                    Events.McpToolsChangedEvent.class,
+                    Events.LearnProgressEvent.class);
+            for (Class<? extends Event> eventType : typedEventTypes) {
+                assertEquals(1, events.stream().filter(eventType::isInstance).count(), eventType.getSimpleName());
+            }
+
+            List<String> knownMethods = List.of(
+                    "autohand.automode.iteration",
+                    "autohand.automode.complete",
+                    "autohand.automode.error",
+                    "autohand.hook.preTool",
+                    "autohand.hook.postTool",
+                    "autohand.hook.prePrompt",
+                    "autohand.hook.postResponse",
+                    "autohand.mcp.invokeRequest",
+                    "autohand.mcp.toolsChanged",
+                    "autohand.learn.progress");
+            List<Events.UnknownEvent> unknownEvents = events.stream()
+                    .filter(Events.UnknownEvent.class::isInstance)
+                    .map(Events.UnknownEvent.class::cast)
+                    .toList();
+            for (String method : knownMethods) {
+                assertEquals(1, unknownEvents.stream().filter(event -> method.equals(event.method())).count(), method);
+                Events.UnknownEvent malformed = unknownEvents.stream()
+                        .filter(event -> method.equals(event.method()))
+                        .findFirst().orElseThrow();
+                assertEquals(method, malformed.params().path("malformedMarker").asText());
+            }
+
+            Events.UnknownEvent future = unknownEvents.stream()
+                    .filter(event -> "autohand.customFutureEvent".equals(event.method()))
+                    .findFirst().orElseThrow();
+            assertEquals("kept for forward compatibility", future.params().path("meaning").asText());
         }
     }
 

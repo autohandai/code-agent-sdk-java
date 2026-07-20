@@ -614,51 +614,74 @@ public final class RPCClient {
                     params.hasNonNull("applied") ? params.get("applied").asBoolean() : null,
                     text(params, "error", null),
                     timestamp);
-            case "autohand.automode.iteration" -> new Events.AutoModeIterationEvent(
+            case "autohand.automode.iteration" -> !validAutoModeIteration(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.AutoModeIterationEvent(
                     text(params, "sessionId", null),
                     params.path("iteration").asInt(0),
                     MAPPER.convertValue(params.path("actions"), new TypeReference<List<String>>() { }),
                     params.hasNonNull("tokensUsed") ? params.get("tokensUsed").asLong() : null,
                     timestamp);
-            case "autohand.automode.complete" -> new Events.AutoModeCompleteEvent(
+            case "autohand.automode.complete" -> !validAutoModeComplete(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.AutoModeCompleteEvent(
                     text(params, "sessionId", null),
                     params.path("iterations").asInt(0),
                     params.path("filesCreated").asInt(0),
                     params.path("filesModified").asInt(0),
                     timestamp);
-            case "autohand.automode.error" -> new Events.AutoModeErrorEvent(
+            case "autohand.automode.error" -> !validAutoModeError(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.AutoModeErrorEvent(
                     text(params, "sessionId", null),
                     text(params, "error", null),
                     timestamp);
-            case "autohand.hook.preTool" -> new Events.HookPreToolEvent(
+            case "autohand.hook.preTool" -> !validHookPreTool(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookPreToolEvent(
                     text(params, "toolId", null),
                     text(params, "toolName", null),
                     MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { }),
                     timestamp);
-            case "autohand.hook.postTool" -> new Events.HookPostToolEvent(
+            case "autohand.hook.postTool" -> !validHookPostTool(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookPostToolEvent(
                     text(params, "toolId", null),
                     text(params, "toolName", null),
                     params.path("success").asBoolean(false),
-                    params.path("duration").asLong(0),
+                    params.path("duration").asDouble(0),
                     text(params, "output", null),
                     timestamp);
-            case "autohand.hook.prePrompt" -> new Events.HookPrePromptEvent(
+            case "autohand.hook.prePrompt" -> !validHookPrePrompt(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookPrePromptEvent(
                     text(params, "instruction", null),
                     MAPPER.convertValue(params.path("mentionedFiles"), new TypeReference<List<String>>() { }),
                     timestamp);
-            case "autohand.hook.postResponse" -> new Events.HookPostResponseEvent(
+            case "autohand.hook.postResponse" -> !validHookPostResponse(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookPostResponseEvent(
                     params.path("tokensUsed").asLong(0),
                     tokenUsageStatus(text(params, "tokensUsageStatus", null)),
                     params.path("toolCallsCount").asInt(0),
-                    params.path("duration").asLong(0),
+                    params.path("duration").asDouble(0),
                     timestamp);
-            case "autohand.mcp.invokeRequest" -> new Events.McpInvocationRequestEvent(
+            case "autohand.mcp.invokeRequest" -> !validMcpInvocationRequest(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.McpInvocationRequestEvent(
                     text(params, "requestId", null),
                     text(params, "toolName", null),
                     MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { }),
                     timestamp);
-            case "autohand.mcp.toolsChanged" -> new Events.McpToolsChangedEvent(
+            case "autohand.mcp.toolsChanged" -> !validMcpToolsChanged(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.McpToolsChangedEvent(
                     MAPPER.convertValue(params.path("tools"), new TypeReference<List<Events.McpTool>>() { }),
+                    timestamp);
+            case "autohand.learn.progress" -> !validLearnProgress(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.LearnProgressEvent(
+                    learnProgressStatus(text(params, "status", null)),
                     timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
@@ -693,6 +716,138 @@ public final class RPCClient {
             case "unavailable" -> Events.TokenUsageStatus.UNAVAILABLE;
             default -> null;
         };
+    }
+
+    private static Events.LearnProgressStatus learnProgressStatus(String value) {
+        return switch (value == null ? "" : value) {
+            case "analyzing" -> Events.LearnProgressStatus.ANALYZING;
+            case "loading-registry" -> Events.LearnProgressStatus.LOADING_REGISTRY;
+            case "evaluating" -> Events.LearnProgressStatus.EVALUATING;
+            case "generating" -> Events.LearnProgressStatus.GENERATING;
+            case "updating" -> Events.LearnProgressStatus.UPDATING;
+            default -> null;
+        };
+    }
+
+    private static boolean validAutoModeIteration(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "sessionId")
+                && integral(params, "iteration")
+                && stringArray(params, "actions")
+                && optionalIntegral(params, "tokensUsed");
+    }
+
+    private static boolean validAutoModeComplete(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "sessionId")
+                && integral(params, "iterations")
+                && integral(params, "filesCreated")
+                && integral(params, "filesModified");
+    }
+
+    private static boolean validAutoModeError(JsonNode params) {
+        return validTimestamp(params) && textual(params, "sessionId") && textual(params, "error");
+    }
+
+    private static boolean validHookPreTool(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "toolId")
+                && textual(params, "toolName")
+                && params.path("args").isObject();
+    }
+
+    private static boolean validHookPostTool(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "toolId")
+                && textual(params, "toolName")
+                && bool(params, "success")
+                && number(params, "duration")
+                && optionalTextual(params, "output");
+    }
+
+    private static boolean validHookPrePrompt(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "instruction")
+                && stringArray(params, "mentionedFiles");
+    }
+
+    private static boolean validHookPostResponse(JsonNode params) {
+        JsonNode status = params.get("tokensUsageStatus");
+        return validTimestamp(params)
+                && integral(params, "tokensUsed")
+                && integral(params, "toolCallsCount")
+                && number(params, "duration")
+                && (status == null || status.isNull()
+                        || status.isTextual() && tokenUsageStatus(status.textValue()) != null);
+    }
+
+    private static boolean validMcpInvocationRequest(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "requestId")
+                && textual(params, "toolName")
+                && params.path("args").isObject();
+    }
+
+    private static boolean validMcpToolsChanged(JsonNode params) {
+        JsonNode tools = params.path("tools");
+        if (!validTimestamp(params) || !tools.isArray()) {
+            return false;
+        }
+        for (JsonNode tool : tools) {
+            if (!textual(tool, "name") || !textual(tool, "description") || !textual(tool, "serverName")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean validLearnProgress(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "status")
+                && learnProgressStatus(params.path("status").textValue()) != null;
+    }
+
+    private static boolean validTimestamp(JsonNode params) {
+        return params.isObject() && textual(params, "timestamp");
+    }
+
+    private static boolean textual(JsonNode params, String field) {
+        return params.path(field).isTextual();
+    }
+
+    private static boolean integral(JsonNode params, String field) {
+        return params.path(field).isIntegralNumber();
+    }
+
+    private static boolean number(JsonNode params, String field) {
+        return params.path(field).isNumber();
+    }
+
+    private static boolean bool(JsonNode params, String field) {
+        return params.path(field).isBoolean();
+    }
+
+    private static boolean optionalIntegral(JsonNode params, String field) {
+        JsonNode value = params.get(field);
+        return value == null || value.isNull() || value.isIntegralNumber();
+    }
+
+    private static boolean optionalTextual(JsonNode params, String field) {
+        JsonNode value = params.get(field);
+        return value == null || value.isNull() || value.isTextual();
+    }
+
+    private static boolean stringArray(JsonNode params, String field) {
+        JsonNode values = params.path(field);
+        if (!values.isArray()) {
+            return false;
+        }
+        for (JsonNode value : values) {
+            if (!value.isTextual()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static String text(JsonNode node, String firstKey, String defaultValue) {

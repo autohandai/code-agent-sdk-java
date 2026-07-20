@@ -17,6 +17,14 @@ public final class Events {
         UNAVAILABLE
     }
 
+    public enum LearnProgressStatus {
+        ANALYZING,
+        LOADING_REGISTRY,
+        EVALUATING,
+        GENERATING,
+        UPDATING
+    }
+
     public record AgentStartEvent(String sessionId, String model, String workspace, String timestamp) implements Event {
     }
 
@@ -141,7 +149,7 @@ public final class Events {
             String toolId,
             String toolName,
             boolean success,
-            long duration,
+            double duration,
             String output,
             String timestamp
     ) implements Event {
@@ -161,7 +169,7 @@ public final class Events {
             long tokensUsed,
             TokenUsageStatus tokensUsageStatus,
             int toolCallsCount,
-            long duration,
+            double duration,
             String timestamp
     ) implements Event {
     }
@@ -186,6 +194,9 @@ public final class Events {
         public McpToolsChangedEvent {
             tools = tools == null ? List.of() : List.copyOf(tools);
         }
+    }
+
+    public record LearnProgressEvent(LearnProgressStatus status, String timestamp) implements Event {
     }
 
     public record ErrorEvent(int code, String message, String timestamp) implements Event {

@@ -37,6 +37,9 @@ public final class FakeAutohandCli {
                         }
                         String responseText = requestedMessage.startsWith("concurrent-")
                                 ? requestedMessage : "hello from java";
+                        if (requestedMessage.equals("malformed-feature-event")) {
+                            notifyMalformedFeatureEvents();
+                        }
                         notify("autohand.automode.iteration", Map.of(
                                 "sessionId", "auto-session",
                                 "iteration", 3,
@@ -84,7 +87,10 @@ public final class FakeAutohandCli {
                                 "tools", List.of(Map.of(
                                         "name", "vscode__github__search",
                                         "description", "Search issues",
-                                        "serverName", "github")),
+                                "serverName", "github")),
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.learn.progress", Map.of(
+                                "status", "loading-registry",
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
@@ -611,6 +617,68 @@ public final class FakeAutohandCli {
         node.set("params", MAPPER.valueToTree(params));
         System.out.println(MAPPER.writeValueAsString(node));
         System.out.flush();
+    }
+
+    private static void notifyMalformedFeatureEvents() throws Exception {
+        String timestamp = Instant.now().toString();
+        notify("autohand.automode.iteration", Map.ofEntries(
+                Map.entry("sessionId", "auto-session"),
+                Map.entry("iteration", "three"),
+                Map.entry("actions", List.of("edit")),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.automode.iteration")));
+        notify("autohand.automode.complete", Map.ofEntries(
+                Map.entry("sessionId", "auto-session"),
+                Map.entry("iterations", 3),
+                Map.entry("filesCreated", 2),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.automode.complete")));
+        notify("autohand.automode.error", Map.ofEntries(
+                Map.entry("sessionId", "auto-session"),
+                Map.entry("error", 42),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.automode.error")));
+        notify("autohand.hook.preTool", Map.ofEntries(
+                Map.entry("toolId", "tool-call-1"),
+                Map.entry("toolName", "read_file"),
+                Map.entry("args", List.of("README.md")),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.preTool")));
+        notify("autohand.hook.postTool", Map.ofEntries(
+                Map.entry("toolId", "tool-call-1"),
+                Map.entry("toolName", "read_file"),
+                Map.entry("success", "yes"),
+                Map.entry("duration", 18),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.postTool")));
+        notify("autohand.hook.prePrompt", Map.ofEntries(
+                Map.entry("instruction", "Review the SDK"),
+                Map.entry("mentionedFiles", List.of(42)),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.prePrompt")));
+        notify("autohand.hook.postResponse", Map.ofEntries(
+                Map.entry("tokensUsed", 640),
+                Map.entry("tokensUsageStatus", "estimated"),
+                Map.entry("toolCallsCount", 2),
+                Map.entry("duration", 250),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.postResponse")));
+        notify("autohand.mcp.invokeRequest", Map.ofEntries(
+                Map.entry("requestId", "mcp-invoke-1"),
+                Map.entry("toolName", "vscode__github__search"),
+                Map.entry("args", List.of("sdk")),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.mcp.invokeRequest")));
+        notify("autohand.mcp.toolsChanged", Map.ofEntries(
+                Map.entry("tools", List.of(Map.of(
+                        "name", "vscode__github__search",
+                        "description", "Search issues"))),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.mcp.toolsChanged")));
+        notify("autohand.learn.progress", Map.ofEntries(
+                Map.entry("status", "unknown"),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.learn.progress")));
     }
 
     private static void startControlConcurrencyPrompt(JsonNode id) {
