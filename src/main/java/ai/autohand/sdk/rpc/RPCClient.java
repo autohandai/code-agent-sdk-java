@@ -620,6 +620,12 @@ public final class RPCClient {
                     MAPPER.convertValue(params.path("actions"), new TypeReference<List<String>>() { }),
                     params.hasNonNull("tokensUsed") ? params.get("tokensUsed").asLong() : null,
                     timestamp);
+            case "autohand.automode.complete" -> new Events.AutoModeCompleteEvent(
+                    text(params, "sessionId", null),
+                    params.path("iterations").asInt(0),
+                    params.path("filesCreated").asInt(0),
+                    params.path("filesModified").asInt(0),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),

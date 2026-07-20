@@ -104,6 +104,15 @@ public final class Events {
         }
     }
 
+    public record AutoModeCompleteEvent(
+            String sessionId,
+            int iterations,
+            int filesCreated,
+            int filesModified,
+            String timestamp
+    ) implements Event {
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 

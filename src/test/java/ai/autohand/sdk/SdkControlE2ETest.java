@@ -208,6 +208,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedAutoModeCompletionEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.AutoModeCompleteEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.AutoModeCompleteEvent.class::isInstance)
+                    .map(Events.AutoModeCompleteEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(3, event.iterations());
+            assertEquals(5, event.filesModified());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

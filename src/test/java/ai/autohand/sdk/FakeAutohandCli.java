@@ -43,6 +43,12 @@ public final class FakeAutohandCli {
                                 "actions", List.of("edit", "test"),
                                 "tokensUsed", 1200,
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.automode.complete", Map.of(
+                                "sessionId", "auto-session",
+                                "iterations", 3,
+                                "filesCreated", 2,
+                                "filesModified", 5,
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",
