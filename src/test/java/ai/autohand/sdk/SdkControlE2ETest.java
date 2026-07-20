@@ -7,6 +7,7 @@ import ai.autohand.sdk.types.DirectoryAccessAcknowledgement;
 import ai.autohand.sdk.types.ChangesDecision;
 import ai.autohand.sdk.types.SessionHistory;
 import ai.autohand.sdk.types.SessionDetails;
+import ai.autohand.sdk.types.SessionAttachment;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -81,6 +82,16 @@ class SdkControlE2ETest {
 
             assertEquals("done", loaded.messages().getFirst().content());
             assertEquals("Session not found", missing.error());
+        }
+    }
+
+    @Test
+    void attachesSessionThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            SessionAttachment.Result result = sdk.attachSession("session-attach-1");
+
+            assertTrue(result.success());
+            assertEquals(9, result.messageCount());
         }
     }
 

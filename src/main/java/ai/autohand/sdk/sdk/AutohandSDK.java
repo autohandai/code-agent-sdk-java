@@ -508,6 +508,12 @@ public final class AutohandSDK implements AutoCloseable {
                 result.hasNonNull("error") ? result.get("error").asText() : null);
     }
 
+    public SessionAttachment.Result attachSession(String sessionId) {
+        ensureStarted();
+        return client.request("autohand.session.attach",
+                new SessionAttachment.Params(sessionId), SessionAttachment.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();

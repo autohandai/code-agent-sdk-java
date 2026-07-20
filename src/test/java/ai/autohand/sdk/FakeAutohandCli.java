@@ -160,6 +160,16 @@ public final class FakeAutohandCli {
                                     Map.entry("workspaceRoot", "/workspace")));
                         }
                     }
+                    case "autohand.session.attach" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 1
+                                && "session-attach-1".equals(params.path("sessionId").asText());
+                        respond(id, Map.of(
+                                "success", exact,
+                                "sessionId", "session-attach-1",
+                                "workspaceRoot", "/workspace",
+                                "messageCount", 9));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",
