@@ -3,6 +3,7 @@ package ai.autohand.sdk;
 import ai.autohand.sdk.sdk.AutohandSDK;
 import ai.autohand.sdk.types.PermissionAcknowledgement;
 import ai.autohand.sdk.types.DirectoryAccessResponse;
+import ai.autohand.sdk.types.DirectoryAccessAcknowledgement;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -29,6 +30,15 @@ class SdkControlE2ETest {
     void respondsToDirectoryAccessThroughSpawnedCli() throws Exception {
         try (AutohandSDK sdk = startedSdk()) {
             DirectoryAccessResponse.Result result = sdk.respondDirectoryAccess("directory-1", true);
+
+            assertTrue(result.success());
+        }
+    }
+
+    @Test
+    void acknowledgesDirectoryAccessThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            DirectoryAccessAcknowledgement.Result result = sdk.acknowledgeDirectoryAccess("directory-1");
 
             assertTrue(result.success());
         }

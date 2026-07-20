@@ -100,6 +100,11 @@ public final class FakeAutohandCli {
                                 && "directory-1".equals(params.path("requestId").asText())
                                 && params.path("granted").asBoolean()));
                     }
+                    case "autohand.directoryAccessAcknowledged" -> {
+                        JsonNode params = request.path("params");
+                        respond(id, Map.of("success", params.size() == 1
+                                && "directory-1".equals(params.path("requestId").asText())));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

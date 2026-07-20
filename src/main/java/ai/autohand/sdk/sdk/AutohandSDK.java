@@ -478,6 +478,14 @@ public final class AutohandSDK implements AutoCloseable {
                 DirectoryAccessResponse.Result.class);
     }
 
+    public DirectoryAccessAcknowledgement.Result acknowledgeDirectoryAccess(String requestId) {
+        ensureStarted();
+        return RPCClient.convert(
+                client.request("autohand.directoryAccessAcknowledged",
+                        new DirectoryAccessAcknowledgement.Params(requestId)),
+                DirectoryAccessAcknowledgement.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
