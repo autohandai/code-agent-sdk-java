@@ -182,6 +182,17 @@ public final class FakeAutohandCli {
                         respond(id, Map.of("success", params.size() == 1
                                 && params.path("pattern").asText().isEmpty()));
                     }
+                    case "autohand.mcp.setVscodeTools" -> {
+                        JsonNode tool = request.path("params").path("tools").path(0);
+                        boolean exact = request.path("params").size() == 1
+                                && request.path("params").path("tools").size() == 1
+                                && "search".equals(tool.path("name").asText())
+                                && "Search issues".equals(tool.path("description").asText())
+                                && "github".equals(tool.path("serverName").asText())
+                                && "object".equals(tool.path("inputSchema").path("type").asText())
+                                && tool.path("inputSchema").path("required").size() == 1;
+                        respond(id, Map.of("success", exact));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

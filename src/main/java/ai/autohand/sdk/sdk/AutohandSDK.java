@@ -525,6 +525,11 @@ public final class AutohandSDK implements AutoCloseable {
         return client.request("autohand.yolo.set", params, YoloMode.Result.class);
     }
 
+    public VscodeMcpTools.Result setVscodeMcpTools(VscodeMcpTools.Params params) {
+        ensureStarted();
+        return client.request("autohand.mcp.setVscodeTools", params, VscodeMcpTools.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();

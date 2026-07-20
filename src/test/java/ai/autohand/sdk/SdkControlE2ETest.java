@@ -9,6 +9,7 @@ import ai.autohand.sdk.types.SessionHistory;
 import ai.autohand.sdk.types.SessionDetails;
 import ai.autohand.sdk.types.SessionAttachment;
 import ai.autohand.sdk.types.YoloMode;
+import ai.autohand.sdk.types.VscodeMcpTools;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -105,6 +107,18 @@ class SdkControlE2ETest {
             assertTrue(enabled.success());
             assertEquals(60, enabled.expiresIn());
             assertTrue(disabledViaAlias.success());
+        }
+    }
+
+    @Test
+    void registersVscodeMcpToolsThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            VscodeMcpTools.InputSchema schema = VscodeMcpTools.InputSchema.object(
+                    Map.of("query", Map.of("type", "string")), List.of("query"));
+            VscodeMcpTools.Result result = sdk.setVscodeMcpTools(new VscodeMcpTools.Params(List.of(
+                    new VscodeMcpTools.Tool("search", "Search issues", "github", schema))));
+
+            assertTrue(result.success());
         }
     }
 
