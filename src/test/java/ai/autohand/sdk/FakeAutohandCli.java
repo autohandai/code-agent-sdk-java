@@ -314,6 +314,8 @@ public final class FakeAutohandCli {
                                             "timestamp", "2026-07-20T00:02:00Z"))));
                     case "autohand.automode.pause" -> respond(id, Map.of(
                             "success", request.path("params").isEmpty()));
+                    case "autohand.automode.resume" -> respond(id, Map.of(
+                            "success", request.path("params").isEmpty()));
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

@@ -315,6 +315,11 @@ public final class AutohandSDK implements AutoCloseable {
         return client.pauseAutoMode();
     }
 
+    public AutoMode.OperationResult resumeAutoMode() {
+        ensureStarted();
+        return client.resumeAutoMode();
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry() {
         return getSkillsRegistry(CommunitySkills.RegistryParams.cached());
     }

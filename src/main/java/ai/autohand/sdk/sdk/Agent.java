@@ -173,6 +173,10 @@ public final class Agent implements AutoCloseable {
         return sdk.pauseAutoMode();
     }
 
+    public AutoMode.OperationResult resumeAutoMode() {
+        return sdk.resumeAutoMode();
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return sdk.getSkillsRegistry(params);
     }
