@@ -657,6 +657,9 @@ public final class RPCClient {
                     text(params, "toolName", null),
                     MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { }),
                     timestamp);
+            case "autohand.mcp.toolsChanged" -> new Events.McpToolsChangedEvent(
+                    MAPPER.convertValue(params.path("tools"), new TypeReference<List<Events.McpTool>>() { }),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),

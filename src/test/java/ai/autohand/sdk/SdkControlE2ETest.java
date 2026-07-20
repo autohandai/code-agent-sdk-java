@@ -301,6 +301,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedMcpToolsChangedEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.McpToolsChangedEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.McpToolsChangedEvent.class::isInstance)
+                    .map(Events.McpToolsChangedEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("vscode__github__search", event.tools().getFirst().name());
+            assertEquals("github", event.tools().getFirst().serverName());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

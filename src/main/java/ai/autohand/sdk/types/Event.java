@@ -14,5 +14,6 @@ public sealed interface Event permits Events.AgentStartEvent, Events.AgentEndEve
         Events.HookPrePromptEvent,
         Events.HookPostResponseEvent,
         Events.McpInvocationRequestEvent,
+        Events.McpToolsChangedEvent,
         Events.ErrorEvent, Events.UnknownEvent {
 }

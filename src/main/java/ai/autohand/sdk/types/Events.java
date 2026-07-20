@@ -179,6 +179,15 @@ public final class Events {
         }
     }
 
+    public record McpTool(String name, String description, String serverName) {
+    }
+
+    public record McpToolsChangedEvent(List<McpTool> tools, String timestamp) implements Event {
+        public McpToolsChangedEvent {
+            tools = tools == null ? List.of() : List.copyOf(tools);
+        }
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 

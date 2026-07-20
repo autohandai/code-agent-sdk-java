@@ -80,6 +80,12 @@ public final class FakeAutohandCli {
                                 "toolName", "vscode__github__search",
                                 "args", Map.of("query", "sdk"),
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.mcp.toolsChanged", Map.of(
+                                "tools", List.of(Map.of(
+                                        "name", "vscode__github__search",
+                                        "description", "Search issues",
+                                        "serverName", "github")),
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",
