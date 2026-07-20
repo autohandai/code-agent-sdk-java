@@ -15,6 +15,7 @@ import ai.autohand.sdk.types.LearnRecommendation;
 import ai.autohand.sdk.types.LearnUpdate;
 import ai.autohand.sdk.types.LearnGeneration;
 import ai.autohand.sdk.types.ToolsRegistry;
+import ai.autohand.sdk.types.ContextCompaction;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -177,6 +178,15 @@ class SdkControlE2ETest {
             assertEquals(ToolsRegistry.Source.BUILTIN, result.tools().getFirst().source());
             assertEquals(ToolsRegistry.Scope.PROJECT, result.tools().getFirst().scope());
             assertEquals("Invalid schema", result.diagnostics().getFirst().reason());
+        }
+    }
+
+    @Test
+    void setsContextCompactionThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            ContextCompaction.Result result = sdk.setContextCompact(true);
+
+            assertTrue(result.enabled());
         }
     }
 

@@ -558,6 +558,12 @@ public final class AutohandSDK implements AutoCloseable {
         return client.request("autohand.getToolsRegistry", Map.of(), ToolsRegistry.Result.class);
     }
 
+    public ContextCompaction.Result setContextCompact(boolean enabled) {
+        ensureStarted();
+        return client.request("autohand.setContextCompact",
+                new ContextCompaction.Params(enabled), ContextCompaction.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();

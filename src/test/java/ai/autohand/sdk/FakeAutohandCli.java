@@ -247,6 +247,11 @@ public final class FakeAutohandCli {
                             "diagnostics", request.path("params").isEmpty()
                                     ? List.of(Map.of("file", "broken-tool.json", "reason", "Invalid schema"))
                                     : List.of()));
+                    case "autohand.setContextCompact" -> {
+                        JsonNode params = request.path("params");
+                        respond(id, Map.of("enabled", params.size() == 1
+                                && params.path("enabled").asBoolean()));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",
