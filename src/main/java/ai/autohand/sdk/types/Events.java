@@ -2,6 +2,8 @@ package ai.autohand.sdk.types;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import java.util.List;
+
 /** Concrete event records emitted by the SDK. */
 public final class Events {
     private Events() {
@@ -88,6 +90,18 @@ public final class Events {
             String error,
             String timestamp
     ) implements Event {
+    }
+
+    public record AutoModeIterationEvent(
+            String sessionId,
+            int iteration,
+            List<String> actions,
+            Long tokensUsed,
+            String timestamp
+    ) implements Event {
+        public AutoModeIterationEvent {
+            actions = actions == null ? List.of() : List.copyOf(actions);
+        }
     }
 
     public record ErrorEvent(int code, String message, String timestamp) implements Event {

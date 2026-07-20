@@ -16,6 +16,9 @@ import ai.autohand.sdk.types.LearnUpdate;
 import ai.autohand.sdk.types.LearnGeneration;
 import ai.autohand.sdk.types.ToolsRegistry;
 import ai.autohand.sdk.types.ContextCompaction;
+import ai.autohand.sdk.types.Event;
+import ai.autohand.sdk.types.Events;
+import ai.autohand.sdk.types.PromptParams;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -24,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -190,6 +194,20 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedAutoModeIterationEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            List<Event> events = streamFeatureEvents(sdk);
+            Events.AutoModeIterationEvent event = events.stream()
+                    .filter(Events.AutoModeIterationEvent.class::isInstance)
+                    .map(Events.AutoModeIterationEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(List.of("edit", "test"), event.actions());
+            assertEquals(1200L, event.tokensUsed());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())
@@ -198,6 +216,12 @@ class SdkControlE2ETest {
                 .build());
         sdk.start();
         return sdk;
+    }
+
+    private static List<Event> streamFeatureEvents(AutohandSDK sdk) {
+        List<Event> events = new ArrayList<>();
+        sdk.streamPrompt(new PromptParams("feature-events"), events::add);
+        return events;
     }
 
     private Path fakeCli() throws Exception {

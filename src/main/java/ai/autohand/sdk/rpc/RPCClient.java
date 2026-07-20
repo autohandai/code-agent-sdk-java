@@ -614,6 +614,12 @@ public final class RPCClient {
                     params.hasNonNull("applied") ? params.get("applied").asBoolean() : null,
                     text(params, "error", null),
                     timestamp);
+            case "autohand.automode.iteration" -> new Events.AutoModeIterationEvent(
+                    text(params, "sessionId", null),
+                    params.path("iteration").asInt(0),
+                    MAPPER.convertValue(params.path("actions"), new TypeReference<List<String>>() { }),
+                    params.hasNonNull("tokensUsed") ? params.get("tokensUsed").asLong() : null,
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),

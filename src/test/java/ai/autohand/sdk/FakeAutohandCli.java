@@ -37,6 +37,12 @@ public final class FakeAutohandCli {
                         }
                         String responseText = requestedMessage.startsWith("concurrent-")
                                 ? requestedMessage : "hello from java";
+                        notify("autohand.automode.iteration", Map.of(
+                                "sessionId", "auto-session",
+                                "iteration", 3,
+                                "actions", List.of("edit", "test"),
+                                "tokensUsed", 1200,
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",
