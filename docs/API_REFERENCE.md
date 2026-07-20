@@ -80,6 +80,7 @@ sdk.stop();
 - `attachBrowserHandoff(BrowserHandoff.AttachParams params)`: attaches a handoff by token.
 - `attachLatestBrowserHandoff()`: attaches the newest available browser handoff.
 - `startAutoMode(AutoMode.StartParams params)`: starts a bounded autonomous run.
+- `getAutoModeStatus()`: returns typed run state, file counts, branch, and checkpoint metadata.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

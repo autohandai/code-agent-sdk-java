@@ -123,6 +123,7 @@ Create an expiring browser attachment URL with `createBrowserHandoff(...)`.
 Attach one by token with `attachBrowserHandoff(...)`.
 Use `attachLatestBrowserHandoff()` when the newest handoff should be selected automatically.
 Start a bounded autonomous run with typed limits through `startAutoMode(...)`.
+Inspect progress and checkpoint metadata with `getAutoModeStatus()`.
 
 For JSON output:
 

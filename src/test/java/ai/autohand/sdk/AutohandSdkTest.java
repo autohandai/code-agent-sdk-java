@@ -245,6 +245,24 @@ class AutohandSdkTest {
     }
 
     @Test
+    void getsTypedAutoModeStatusWithExactEmptyParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            AutoMode.StatusResult result = sdk.getAutoModeStatus();
+
+            assertTrue(result.active());
+            assertFalse(result.paused());
+            assertEquals(AutoMode.Status.RUNNING, result.state().status());
+            assertEquals(2, result.state().currentIteration());
+            assertEquals("checkpoint-1", result.state().lastCheckpoint().commit());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

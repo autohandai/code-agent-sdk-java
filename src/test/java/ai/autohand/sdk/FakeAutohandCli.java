@@ -170,7 +170,7 @@ public final class FakeAutohandCli {
                     }
                     case "autohand.autoresearch.status" -> respond(id, Map.of(
                             "success", true,
-                            "active", true,
+                            "active", request.path("params").isEmpty(),
                             "statusText", "Autoresearch active",
                             "runsLogged", 1,
                             "paretoAttemptIds", List.of("attempt-1")));
@@ -297,6 +297,21 @@ public final class FakeAutohandCli {
                                 && params.path("maxCost").asDouble() == 4.5;
                         respond(id, Map.of("success", exact, "sessionId", "auto-session"));
                     }
+                    case "autohand.automode.status" -> respond(id, Map.of(
+                            "active", true,
+                            "paused", false,
+                            "state", Map.of(
+                                    "sessionId", "auto-session",
+                                    "status", "running",
+                                    "currentIteration", 2,
+                                    "maxIterations", 8,
+                                    "filesCreated", 1,
+                                    "filesModified", 3,
+                                    "branch", "autohand/auto-session",
+                                    "lastCheckpoint", Map.of(
+                                            "commit", "checkpoint-1",
+                                            "message", "iteration 2",
+                                            "timestamp", "2026-07-20T00:02:00Z"))));
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(
