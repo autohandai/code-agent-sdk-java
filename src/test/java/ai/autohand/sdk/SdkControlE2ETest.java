@@ -13,6 +13,7 @@ import ai.autohand.sdk.types.VscodeMcpTools;
 import ai.autohand.sdk.types.McpInvocationResponse;
 import ai.autohand.sdk.types.LearnRecommendation;
 import ai.autohand.sdk.types.LearnUpdate;
+import ai.autohand.sdk.types.LearnGeneration;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -154,6 +155,16 @@ class SdkControlE2ETest {
             assertTrue(result.success());
             assertEquals(LearnUpdate.Status.UPDATED, result.results().getFirst().status());
             assertEquals(1, result.unchanged());
+        }
+    }
+
+    @Test
+    void generatesSkillFromProjectLearningThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            LearnGeneration.Result result = sdk.generateLearn(LearnGeneration.Scope.PROJECT);
+
+            assertTrue(result.success());
+            assertEquals("java-sdk-learning", result.skillName());
         }
     }
 

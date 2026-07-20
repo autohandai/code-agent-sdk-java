@@ -547,6 +547,12 @@ public final class AutohandSDK implements AutoCloseable {
         return client.request("autohand.learn.update", Map.of(), LearnUpdate.Result.class);
     }
 
+    public LearnGeneration.Result generateLearn(LearnGeneration.Scope scope) {
+        ensureStarted();
+        return client.request("autohand.learn.generate",
+                new LearnGeneration.Params(scope), LearnGeneration.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();

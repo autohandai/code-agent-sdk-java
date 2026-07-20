@@ -225,6 +225,15 @@ public final class FakeAutohandCli {
                             "results", List.of(
                                     Map.of("name", "java-21", "status", "updated"),
                                     Map.of("name", "testing", "status", "unchanged"))));
+                    case "autohand.learn.generate" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 1
+                                && "project".equals(params.path("scope").asText());
+                        respond(id, Map.of(
+                                "success", exact,
+                                "skillName", "java-sdk-learning",
+                                "skillPath", ".agents/skills/java-sdk-learning"));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",
