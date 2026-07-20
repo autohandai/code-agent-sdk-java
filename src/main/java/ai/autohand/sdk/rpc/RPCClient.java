@@ -652,6 +652,11 @@ public final class RPCClient {
                     params.path("toolCallsCount").asInt(0),
                     params.path("duration").asLong(0),
                     timestamp);
+            case "autohand.mcp.invokeRequest" -> new Events.McpInvocationRequestEvent(
+                    text(params, "requestId", null),
+                    text(params, "toolName", null),
+                    MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { }),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),

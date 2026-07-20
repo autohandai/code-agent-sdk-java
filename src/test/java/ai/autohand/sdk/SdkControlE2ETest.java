@@ -288,6 +288,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedMcpInvocationRequestsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.McpInvocationRequestEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.McpInvocationRequestEvent.class::isInstance)
+                    .map(Events.McpInvocationRequestEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("mcp-invoke-1", event.requestId());
+            assertEquals("sdk", event.args().get("query"));
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

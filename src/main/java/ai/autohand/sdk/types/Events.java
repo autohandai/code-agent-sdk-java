@@ -166,6 +166,19 @@ public final class Events {
     ) implements Event {
     }
 
+    public record McpInvocationRequestEvent(
+            String requestId,
+            String toolName,
+            Map<String, Object> args,
+            String timestamp
+    ) implements Event {
+        public McpInvocationRequestEvent {
+            args = args == null
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(args));
+        }
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 

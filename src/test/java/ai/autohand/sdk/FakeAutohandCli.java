@@ -75,6 +75,11 @@ public final class FakeAutohandCli {
                                 "toolCallsCount", 2,
                                 "duration", 250,
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.mcp.invokeRequest", Map.of(
+                                "requestId", "mcp-invoke-1",
+                                "toolName", "vscode__github__search",
+                                "args", Map.of("query", "sdk"),
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",
