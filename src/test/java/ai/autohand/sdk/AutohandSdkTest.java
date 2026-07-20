@@ -1,10 +1,15 @@
 package ai.autohand.sdk;
 
+import ai.autohand.sdk.rpc.RPCClient;
 import ai.autohand.sdk.sdk.Agent;
 import ai.autohand.sdk.sdk.AgentOptions;
 import ai.autohand.sdk.sdk.AutohandSDK;
+import ai.autohand.sdk.sdk.RequestTimeoutException;
+import ai.autohand.sdk.transport.Transport;
+import ai.autohand.sdk.transport.TransportConfig;
 import ai.autohand.sdk.types.ContextUsage;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.DecisionScope;
 import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
@@ -15,6 +20,7 @@ import ai.autohand.sdk.types.Goals;
 import ai.autohand.sdk.types.FeatureFlagSettings;
 import ai.autohand.sdk.types.SkillSource;
 import ai.autohand.sdk.types.ModelInfo;
+import ai.autohand.sdk.types.McpDiscovery;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.PromptParams;
 import ai.autohand.sdk.types.SDKConfig;
@@ -26,10 +32,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AutohandSdkTest {
@@ -118,6 +130,168 @@ class AutohandSdkTest {
             assertEquals("Hook added", hook.message());
             assertEquals(1, sdk.getHooks().hooks().size());
             assertEquals("user@example.com", sdk.accountInfo().email());
+            assertEquals("running", sdk.getState().status());
+            assertEquals("hello from java", sdk.getMessages().messages().getFirst().content());
+            assertEquals("read_file", sdk.getMessages().messages().getFirst().toolCalls().getFirst().name());
+        }
+    }
+
+    @Test
+    void exposesTypedCommunitySkillsAndMcpDiscovery() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            CommunitySkills.RegistryResult registry = sdk.getSkillsRegistry(
+                    new CommunitySkills.RegistryParams(true));
+            CommunitySkills.InstallResult installed = sdk.installSkill(new CommunitySkills.InstallParams(
+                    "java-quality", CommunitySkills.Scope.PROJECT, true));
+            McpDiscovery.ListServersResult servers = sdk.listMcpServers();
+            McpDiscovery.ListToolsResult tools = sdk.listMcpTools(new McpDiscovery.ListToolsParams("github"));
+            McpDiscovery.GetServerConfigsResult configs = sdk.getMcpServerConfigs();
+
+            assertTrue(registry.success());
+            assertEquals("java-quality", registry.skills().getFirst().id());
+            assertEquals(".agents/skills/java-quality", installed.path());
+            assertEquals(2, servers.servers().getFirst().toolCount());
+            assertEquals("github", tools.tools().getFirst().serverName());
+            assertEquals(McpDiscovery.Transport.STDIO, configs.configs().getFirst().transport());
+        }
+    }
+
+    @Test
+    void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build()); var executor = Executors.newFixedThreadPool(2)) {
+            sdk.start();
+            var first = executor.submit(() -> streamedText(sdk, "concurrent-one"));
+            var second = executor.submit(() -> streamedText(sdk, "concurrent-two"));
+
+            assertEquals("concurrent-one", first.get(5, TimeUnit.SECONDS));
+            assertEquals("concurrent-two", second.get(5, TimeUnit.SECONDS));
+        }
+    }
+
+    @Test
+    void controlRpcCompletesWhilePromptIsActiveWithoutStealingItsEvents() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .timeoutMs(5_000)
+                .build()); var executor = Executors.newFixedThreadPool(2)) {
+            sdk.start();
+            var eventSeen = new CountDownLatch(1);
+            AtomicReference<String> text = new AtomicReference<>("");
+            var prompt = executor.submit(() -> sdk.streamPrompt(new PromptParams("control-concurrency"), event -> {
+                if (event instanceof Events.MessageUpdateEvent update) {
+                    text.updateAndGet(existing -> existing + update.delta());
+                    eventSeen.countDown();
+                }
+            }));
+
+            assertTrue(eventSeen.await(2, TimeUnit.SECONDS));
+            assertEquals("running", sdk.getState().status());
+            prompt.get(2, TimeUnit.SECONDS);
+            assertEquals("control-ready", text.get());
+        }
+    }
+
+    @Test
+    void callbackFailureIsTerminalAndDoesNotResendRun() throws Exception {
+        try (Agent agent = Agent.create(AgentOptions.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            var run = agent.send("fail callback once");
+            RuntimeException expected = new RuntimeException("consumer failed");
+
+            RuntimeException first = assertThrows(RuntimeException.class, () -> run.stream(event -> {
+                throw expected;
+            }));
+            RuntimeException second = assertThrows(RuntimeException.class, run::waitForResult);
+
+            assertSame(expected, first);
+            assertSame(expected, second);
+        }
+    }
+
+    @Test
+    void failedStartupRollsBackSpawnedProcess() throws Exception {
+        FeatureFlagSettings invalidForFixture = FeatureFlagSettings.builder().slashGoal(true).build();
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .features(invalidForFixture)
+                .build())) {
+            assertThrows(RuntimeException.class, sdk::start);
+            assertFalse(sdk.isRunning());
+        }
+    }
+
+    @Test
+    void closingTransportWakesAnInflightRequest() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .timeoutMs(60_000)
+                .build()); var executor = Executors.newFixedThreadPool(2)) {
+            sdk.start();
+            var request = executor.submit(() -> sdk.client().request("autohand.test.hang", java.util.Map.of()));
+            var secondRequest = executor.submit(
+                    () -> sdk.client().request("autohand.test.hang", java.util.Map.of()));
+            Thread.sleep(50);
+            sdk.stop();
+
+            Exception failure = assertThrows(Exception.class, () -> request.get(2, TimeUnit.SECONDS));
+            Exception secondFailure = assertThrows(Exception.class,
+                    () -> secondRequest.get(2, TimeUnit.SECONDS));
+            assertInstanceOf(ai.autohand.sdk.sdk.TransportException.class, failure.getCause());
+            assertInstanceOf(ai.autohand.sdk.sdk.TransportException.class, secondFailure.getCause());
+        }
+    }
+
+    @Test
+    void transportRestartIgnoresLateOutputAndCloseSignalsFromOldGeneration() throws Exception {
+        Transport transport = new Transport(new TransportConfig(
+                tempDir.toString(), fakeCli().toString(), false, 5_000));
+        long previousGeneration = -1;
+        try {
+            for (int attempt = 0; attempt < 10; attempt++) {
+                transport.start();
+                long activeGeneration = transport.generation();
+                if (previousGeneration >= 0) {
+                    long staleGeneration = previousGeneration;
+                    assertTrue(activeGeneration > staleGeneration);
+                    assertThrows(ai.autohand.sdk.sdk.TransportException.class,
+                            () -> transport.takeLine(java.time.Duration.ofMillis(1), staleGeneration));
+                }
+                RPCClient client = new RPCClient(transport);
+                assertEquals("running", client.getState().path("status").asText());
+                transport.close();
+                previousGeneration = activeGeneration;
+            }
+        } finally {
+            transport.close();
+        }
+    }
+
+    @Test
+    void timedOutResponseIsDiscardedWithoutPoisoningTheNextRequest() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .timeoutMs(100)
+                .build())) {
+            sdk.start();
+
+            assertThrows(RequestTimeoutException.class,
+                    () -> sdk.client().request("autohand.test.late", java.util.Map.of()));
+            Thread.sleep(300);
+
             assertEquals("running", sdk.getState().status());
         }
     }
@@ -300,5 +474,15 @@ class AutohandSdkTest {
                 """.formatted(java, classpath));
         script.toFile().setExecutable(true);
         return script;
+    }
+
+    private static String streamedText(AutohandSDK sdk, String prompt) {
+        AtomicReference<String> text = new AtomicReference<>("");
+        sdk.streamPrompt(new PromptParams(prompt), event -> {
+            if (event instanceof Events.MessageUpdateEvent update) {
+                text.updateAndGet(existing -> existing + update.delta());
+            }
+        });
+        return text.get();
     }
 }

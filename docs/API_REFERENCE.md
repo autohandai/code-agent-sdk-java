@@ -26,6 +26,7 @@ Agent agent = Agent.create(AgentOptions.builder()
 - `agent.supportsCommand(String command)`: checks the connected CLI surface.
 - Typed autoresearch lifecycle and ledger methods listed below are also available on `Agent`.
 - Typed persistent-goal methods listed below are also available on `Agent`.
+- Typed community-skill and MCP discovery methods listed below are also available on `Agent`.
 - `agent.close()`: stops the session.
 
 ### Run
@@ -74,12 +75,17 @@ sdk.stop();
 - `replayAutoresearch(...)`, `rescoreAutoresearch(...)`, `compareAutoresearch(...)`
 - `getAutoresearchPareto()`, `pinAutoresearch(...)`, `pruneAutoresearch(...)`
 - `getState()`, `getMessages()`
+- `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
+- `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`
 - `accountInfo()`, `getAccountInfo()`: returns `AccountInfo`
 - `reloadPlugins()`
 - `toggleMcpServer(String serverName, boolean enabled)`
 - `reconnectMcpServer(String serverName)`
 - `setMcpServers(Map<String, McpServerConfig> servers)`
+- `listMcpServers()`: returns `McpDiscovery.ListServersResult`
+- `listMcpTools()`, `listMcpTools(McpDiscovery.ListToolsParams params)`
+- `getMcpServerConfigs()`: returns `McpDiscovery.GetServerConfigsResult`
 - `getHooks()`, `addHook(HookDefinition hook)`, `removeHook(HookEvent event, int index)`, `toggleHook(HookEvent event, int index)`
 - `saveSession()`, `resumeSession(String sessionId)`
 - `getSessionMetadata()`, `getStats()`

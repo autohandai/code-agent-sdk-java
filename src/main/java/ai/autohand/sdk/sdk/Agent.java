@@ -5,7 +5,9 @@ import ai.autohand.sdk.types.PermissionDecision;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.SDKConfig;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Goals;
+import ai.autohand.sdk.types.McpDiscovery;
 
 import java.io.IOException;
 import java.util.Map;
@@ -29,14 +31,13 @@ public final class Agent implements AutoCloseable {
         }
 
         this.sdk = new AutohandSDK(config.build());
-        this.sdk.start();
-
         if (options.permissionMode() != null) {
             this.sdk.setPermissionMode(options.permissionMode());
         }
         if (options.planMode()) {
             this.sdk.enablePlanMode();
         }
+        this.sdk.start();
     }
 
     public static Agent create(AgentOptions options) throws IOException {
@@ -131,6 +132,34 @@ public final class Agent implements AutoCloseable {
 
     public Autoresearch.PruneResult pruneAutoresearch(Autoresearch.PruneParams params) {
         return sdk.pruneAutoresearch(params);
+    }
+
+    public CommunitySkills.RegistryResult getSkillsRegistry() {
+        return sdk.getSkillsRegistry();
+    }
+
+    public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
+        return sdk.getSkillsRegistry(params);
+    }
+
+    public CommunitySkills.InstallResult installSkill(CommunitySkills.InstallParams params) {
+        return sdk.installSkill(params);
+    }
+
+    public McpDiscovery.ListServersResult listMcpServers() {
+        return sdk.listMcpServers();
+    }
+
+    public McpDiscovery.ListToolsResult listMcpTools() {
+        return sdk.listMcpTools();
+    }
+
+    public McpDiscovery.ListToolsResult listMcpTools(McpDiscovery.ListToolsParams params) {
+        return sdk.listMcpTools(params);
+    }
+
+    public McpDiscovery.GetServerConfigsResult getMcpServerConfigs() {
+        return sdk.getMcpServerConfigs();
     }
 
     public RunResult run(String prompt) {

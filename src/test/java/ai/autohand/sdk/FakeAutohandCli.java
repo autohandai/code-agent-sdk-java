@@ -10,9 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public final class FakeAutohandCli {
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final CountDownLatch CONTROL_RPC_RECEIVED = new CountDownLatch(1);
 
     private FakeAutohandCli() {
     }
@@ -27,6 +30,13 @@ public final class FakeAutohandCli {
 
                 switch (method) {
                     case "autohand.prompt" -> {
+                        String requestedMessage = request.path("params").path("message").asText();
+                        if (requestedMessage.equals("control-concurrency")) {
+                            startControlConcurrencyPrompt(id.deepCopy());
+                            continue;
+                        }
+                        String responseText = requestedMessage.startsWith("concurrent-")
+                                ? requestedMessage : "hello from java";
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",
@@ -52,18 +62,18 @@ public final class FakeAutohandCli {
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.messageUpdate", Map.of(
                                 "messageId", "msg-1",
-                                "delta", "hello ",
+                                "delta", responseText,
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.customFutureEvent", Map.of(
                                 "meaning", "kept for forward compatibility",
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.messageUpdate", Map.of(
                                 "messageId", "msg-1",
-                                "delta", "from java",
+                                "delta", "",
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.messageEnd", Map.of(
                                 "messageId", "msg-1",
-                                "content", "hello from java",
+                                "content", responseText,
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.turnEnd", Map.of(
                                 "turnId", "turn-1",
@@ -231,11 +241,53 @@ public final class FakeAutohandCli {
                             "email", "user@example.com",
                             "organization", "Autohand",
                             "subscriptionType", "developer"));
-                    case "autohand.getState" -> respond(id, Map.of(
-                            "status", "running",
-                            "sessionId", "session-1",
-                            "model", "fantail"));
-                    case "autohand.getMessages" -> respond(id, Map.of("messages", List.of("hello from java")));
+                    case "autohand.getState" -> {
+                        CONTROL_RPC_RECEIVED.countDown();
+                        respond(id, Map.of(
+                                "status", "running",
+                                "sessionId", "session-1",
+                                "model", "fantail"));
+                    }
+                    case "autohand.getMessages" -> respond(id, Map.of("messages", List.of(Map.of(
+                            "id", "msg-1",
+                            "role", "assistant",
+                            "content", "hello from java",
+                            "timestamp", "2026-07-20T00:00:00Z",
+                            "toolCalls", List.of(Map.of(
+                                    "id", "call-1", "name", "read_file", "args", Map.of("path", "README.md")))))));
+                    case "autohand.getSkillsRegistry" -> respond(id, Map.of(
+                            "success", true,
+                            "skills", List.of(Map.of(
+                                    "id", "java-quality",
+                                    "name", "Java Quality",
+                                    "description", "Review Java code",
+                                    "category", "development",
+                                    "tags", List.of("java", "review"),
+                                    "rating", 4.8,
+                                    "downloadCount", 120,
+                                    "isFeatured", true,
+                                    "isCurated", true)),
+                            "categories", List.of(Map.of("name", "development", "count", 1))));
+                    case "autohand.installSkill" -> respond(id, Map.of(
+                            "success", true,
+                            "skillName", request.path("params").path("skillName").asText(),
+                            "path", request.path("params").path("scope").asText().equals("project")
+                                    ? ".agents/skills/java-quality" : ".autohand/skills/java-quality"));
+                    case "autohand.mcp.listServers" -> respond(id, Map.of(
+                            "servers", List.of(Map.of("name", "github", "status", "connected", "toolCount", 2))));
+                    case "autohand.mcp.listTools" -> respond(id, Map.of(
+                            "tools", List.of(Map.of(
+                                    "name", "get_issue",
+                                    "description", "Get a GitHub issue",
+                                    "serverName", request.path("params").path("serverName").asText("github")))));
+                    case "autohand.mcp.getServerConfigs" -> respond(id, Map.of(
+                            "configs", List.of(Map.of(
+                                    "name", "github",
+                                    "transport", "stdio",
+                                    "command", "github-mcp",
+                                    "args", List.of("serve"),
+                                    "env", Map.of("LOG_LEVEL", "info"),
+                                    "autoConnect", true))));
                     case "autohand.hooks.addHook" -> respond(id, Map.of(
                             "success", true,
                             "hookId", "hook-1",
@@ -248,6 +300,10 @@ public final class FakeAutohandCli {
                                             "command", "echo ok",
                                             "enabled", true,
                                             "timeoutSeconds", 5)))));
+                    case "autohand.test.hang" -> {
+                        // Intentionally wait for the SDK to close the transport.
+                    }
+                    case "autohand.test.late" -> startDelayedResponse(id.deepCopy());
                     default -> respond(id, Map.of("success", true, "method", method));
                 }
             }
@@ -261,6 +317,39 @@ public final class FakeAutohandCli {
         node.set("params", MAPPER.valueToTree(params));
         System.out.println(MAPPER.writeValueAsString(node));
         System.out.flush();
+    }
+
+    private static void startControlConcurrencyPrompt(JsonNode id) {
+        Thread.ofVirtual().name("fake-control-concurrency-prompt").start(() -> {
+            try {
+                notify("autohand.messageUpdate", Map.of(
+                        "messageId", "msg-control",
+                        "delta", "control-ready",
+                        "timestamp", Instant.now().toString()));
+                if (!CONTROL_RPC_RECEIVED.await(5, TimeUnit.SECONDS)) {
+                    respondError(id, -32000, "Timed out waiting for a concurrent control RPC");
+                    return;
+                }
+                notify("autohand.messageEnd", Map.of(
+                        "messageId", "msg-control",
+                        "content", "control-ready",
+                        "timestamp", Instant.now().toString()));
+                respond(id, Map.of("success", true));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static void startDelayedResponse(JsonNode id) {
+        Thread.ofVirtual().name("fake-delayed-response").start(() -> {
+            try {
+                Thread.sleep(250);
+                respond(id, Map.of("success", true));
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
     }
 
     private static void respond(JsonNode id, Object result) throws Exception {

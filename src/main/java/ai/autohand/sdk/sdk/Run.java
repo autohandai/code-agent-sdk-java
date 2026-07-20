@@ -15,7 +15,15 @@ public final class Run {
     private final String prompt;
     private final List<Event> events = new ArrayList<>();
     private final StringBuilder text = new StringBuilder();
-    private boolean completed;
+    private State state = State.NEW;
+    private RuntimeException failure;
+
+    private enum State {
+        NEW,
+        RUNNING,
+        COMPLETED,
+        FAILED
+    }
 
     Run(AutohandSDK sdk, String prompt) {
         this.sdk = sdk;
@@ -23,24 +31,62 @@ public final class Run {
     }
 
     public void stream(Consumer<Event> onEvent) {
-        if (completed) {
-            events.forEach(onEvent);
-            return;
+        synchronized (this) {
+            if (state == State.COMPLETED) {
+                List.copyOf(events).forEach(onEvent);
+                return;
+            }
+            if (state == State.FAILED) {
+                throw failure;
+            }
+            if (state == State.RUNNING) {
+                throw new IllegalStateException("This run is already streaming.");
+            }
+            state = State.RUNNING;
         }
 
-        sdk.streamPrompt(new PromptParams(prompt), event -> {
-            record(event);
-            onEvent.accept(event);
-        });
-        completed = true;
+        try {
+            sdk.streamPrompt(new PromptParams(prompt), event -> {
+                record(event);
+                onEvent.accept(event);
+            });
+            synchronized (this) {
+                state = State.COMPLETED;
+                notifyAll();
+            }
+        } catch (RuntimeException exception) {
+            synchronized (this) {
+                failure = exception;
+                state = State.FAILED;
+                notifyAll();
+            }
+            throw exception;
+        }
     }
 
     public RunResult waitForResult() {
-        if (!completed) {
+        boolean shouldStart;
+        synchronized (this) {
+            shouldStart = state == State.NEW;
+        }
+        if (shouldStart) {
             stream(event -> {
             });
         }
-        return new RunResult(id, "completed", text.toString(), List.copyOf(events));
+        synchronized (this) {
+            while (state == State.RUNNING) {
+                try {
+                    wait();
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+                    throw new AutohandException("Interrupted while waiting for the run to complete.", exception);
+                }
+            }
+            if (state == State.FAILED) {
+                throw failure;
+            }
+            return new RunResult(id, "completed", text.toString(), List.copyOf(events));
+        }
     }
 
     public <T> T json(Class<T> type) throws StructuredOutputError {
@@ -55,7 +101,7 @@ public final class Run {
         return prompt;
     }
 
-    private void record(Event event) {
+    private synchronized void record(Event event) {
         events.add(event);
         if (event instanceof Events.MessageUpdateEvent update && update.delta() != null) {
             text.append(update.delta());

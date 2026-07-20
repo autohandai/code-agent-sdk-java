@@ -114,6 +114,10 @@ Persistent goals are also typed end to end: `getGoal`, `createGoal`,
 `listGoalTemplates`. See the [persistent goals guide](./docs/persistent-goals.md)
 for feature startup and nullable budget updates.
 
+Community skills and MCP discovery are typed as well: `getSkillsRegistry`,
+`installSkill`, `listMcpServers`, `listMcpTools`, and
+`getMcpServerConfigs`. See the [skills and MCP guide](./docs/skills-and-mcp.md).
+
 For JSON output:
 
 ```java
@@ -208,6 +212,9 @@ scripts/validate-examples.sh
 # Package
 mvn package
 
+# Enforce public-load and usable getState startup p95 < 50 ms
+mvn -q -Dtest=StartupBenchmarkTest test
+
 # Build Maven Central release artifacts locally (requires GPG)
 mvn -P release verify
 ```
@@ -218,6 +225,8 @@ mvn -P release verify
 - [Getting Started](./docs/getting-started.md)
 - [API Reference](./docs/API_REFERENCE.md)
 - [Configuration](./docs/configuration.md)
+- [Community Skills and MCP Discovery](./docs/skills-and-mcp.md)
+- [Startup Performance](./docs/performance.md)
 - [Event Streaming](./docs/event-streaming.md)
 - [Error Handling](./docs/error-handling.md)
 - [Advanced Patterns](./docs/advanced-patterns.md)

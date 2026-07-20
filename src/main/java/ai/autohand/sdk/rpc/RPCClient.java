@@ -7,10 +7,12 @@ import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Goals;
 import ai.autohand.sdk.types.HookDefinition;
 import ai.autohand.sdk.types.HookEvent;
 import ai.autohand.sdk.types.McpServerConfig;
+import ai.autohand.sdk.types.McpDiscovery;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.PermissionResponseParams;
 import ai.autohand.sdk.types.PromptParams;
@@ -24,10 +26,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /** JSON-RPC client for the Autohand CLI subprocess. */
@@ -35,34 +45,67 @@ public final class RPCClient {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    private static final Executor EVENT_EXECUTOR = command ->
+            Thread.ofVirtual().name("autohand-rpc-event").start(command);
 
     private final Transport transport;
     private final AtomicLong nextId = new AtomicLong();
-    private final Map<String, JsonNode> pendingResponses = new ConcurrentHashMap<>();
-    private final ThreadLocal<Consumer<Event>> activeEventConsumer = new ThreadLocal<>();
+    private final Map<String, CompletableFuture<JsonNode>> pendingRequests = new ConcurrentHashMap<>();
+    private final AtomicReference<EventContext> activeEventContext = new AtomicReference<>();
+    private final AtomicBoolean readerStarted = new AtomicBoolean();
+    private final ReentrantLock promptLock = new ReentrantLock(true);
+    private volatile RuntimeException readerFailure;
 
     public RPCClient(Transport transport) {
         this.transport = transport;
     }
 
     public JsonNode request(String method, Object params) {
-        return request(method, params, event -> {
-        });
+        return requestInternal(method, params);
     }
 
     public JsonNode request(String method, Object params, Consumer<Event> onEvent) {
+        if (onEvent == null) {
+            return requestInternal(method, params);
+        }
+
+        promptLock.lock();
+        EventContext context = new EventContext(onEvent);
+        try {
+            if (!activeEventContext.compareAndSet(null, context)) {
+                throw new IllegalStateException("Another event-bearing RPC request is already active.");
+            }
+            try {
+                JsonNode result = requestInternal(method, params);
+                context.await(transport.config().timeoutMs());
+                return result;
+            } finally {
+                activeEventContext.compareAndSet(context, null);
+            }
+        } finally {
+            promptLock.unlock();
+        }
+    }
+
+    private JsonNode requestInternal(String method, Object params) {
         if (!transport.isRunning()) {
             throw new TransportException("Autohand CLI process is not running. Call start() before sending RPC requests.");
         }
-
-        Consumer<Event> previousConsumer = activeEventConsumer.get();
-        if (previousConsumer == null && onEvent != null) {
-            activeEventConsumer.set(onEvent);
+        RuntimeException failure = readerFailure;
+        if (failure != null) {
+            throw failure;
         }
+        ensureReaderStarted();
 
+        long id = nextId.incrementAndGet();
+        String idKey = Long.toString(id);
+        CompletableFuture<JsonNode> response = new CompletableFuture<>();
+        pendingRequests.put(idKey, response);
+        RuntimeException failureAfterRegistration = readerFailure;
+        if (failureAfterRegistration != null) {
+            response.completeExceptionally(failureAfterRegistration);
+        }
         try {
-            long id = nextId.incrementAndGet();
-            String idKey = Long.toString(id);
             ObjectNode request = MAPPER.createObjectNode();
             request.put("jsonrpc", "2.0");
             request.put("method", method);
@@ -71,55 +114,28 @@ public final class RPCClient {
 
             try {
                 transport.writeLine(MAPPER.writeValueAsString(request));
-            } catch (JsonProcessingException e) {
-                throw new TransportException("Failed to serialize JSON-RPC request: " + method, e);
+            } catch (JsonProcessingException exception) {
+                throw new TransportException("Failed to serialize JSON-RPC request: " + method, exception);
             }
 
             long timeoutMs = transport.config().timeoutMs();
-            long deadline = System.nanoTime() + Duration.ofMillis(timeoutMs).toNanos();
-
-            while (true) {
-                JsonNode pending = pendingResponses.remove(idKey);
-                if (pending != null) {
-                    return responseResult(method, pending);
+            try {
+                return responseResult(method, response.get(timeoutMs, TimeUnit.MILLISECONDS));
+            } catch (TimeoutException exception) {
+                throw new RequestTimeoutException(method, timeoutMs);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new TransportException("Interrupted while waiting for Autohand RPC response: " + method,
+                        exception);
+            } catch (ExecutionException exception) {
+                Throwable cause = exception.getCause();
+                if (cause instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
                 }
-
-                long remainingNanos = deadline - System.nanoTime();
-                if (remainingNanos <= 0) {
-                    throw new RequestTimeoutException(method, timeoutMs);
-                }
-
-                long waitMs = Math.max(1, Math.min(Duration.ofNanos(remainingNanos).toMillis(), 1_000));
-                String line = transport.takeLine(Duration.ofMillis(waitMs));
-                if (line == null) {
-                    continue;
-                }
-
-                JsonNode message = parseLine(line);
-                if (message == null) {
-                    continue;
-                }
-
-                if (message.has("method") && !message.has("id")) {
-                    Consumer<Event> target = activeEventConsumer.get();
-                    (target == null ? onEvent : target).accept(toEvent(message));
-                    continue;
-                }
-
-                if (message.has("id")) {
-                    String responseId = idKey(message.get("id"));
-                    if (idKey.equals(responseId)) {
-                        return responseResult(method, message);
-                    }
-                    pendingResponses.put(responseId, message);
-                }
+                throw new TransportException("Failed while waiting for Autohand RPC response: " + method, cause);
             }
         } finally {
-            if (previousConsumer == null) {
-                activeEventConsumer.remove();
-            } else {
-                activeEventConsumer.set(previousConsumer);
-            }
+            pendingRequests.remove(idKey, response);
         }
     }
 
@@ -141,6 +157,15 @@ public final class RPCClient {
 
     public JsonNode getMessages() {
         return request("autohand.getMessages", Map.of());
+    }
+
+    public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
+        return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
+                CommunitySkills.RegistryResult.class);
+    }
+
+    public CommunitySkills.InstallResult installSkill(CommunitySkills.InstallParams params) {
+        return request("autohand.installSkill", params, CommunitySkills.InstallResult.class);
     }
 
     public JsonNode permissionResponse(PermissionResponseParams params) {
@@ -298,6 +323,19 @@ public final class RPCClient {
         return request("autohand.mcp.setServers", Map.of("servers", servers == null ? Map.of() : servers));
     }
 
+    public McpDiscovery.ListServersResult listMcpServers() {
+        return request("autohand.mcp.listServers", Map.of(), McpDiscovery.ListServersResult.class);
+    }
+
+    public McpDiscovery.ListToolsResult listMcpTools(McpDiscovery.ListToolsParams params) {
+        return request("autohand.mcp.listTools", params == null ? McpDiscovery.ListToolsParams.allServers() : params,
+                McpDiscovery.ListToolsResult.class);
+    }
+
+    public McpDiscovery.GetServerConfigsResult getMcpServerConfigs() {
+        return request("autohand.mcp.getServerConfigs", Map.of(), McpDiscovery.GetServerConfigsResult.class);
+    }
+
     public JsonNode saveSession() {
         return request("autohand.saveSession", Map.of());
     }
@@ -385,6 +423,52 @@ public final class RPCClient {
     private static boolean featureDisabled(JsonNode result) {
         return result.isObject() && result.has("ok") && !result.path("ok").asBoolean(true)
                 && result.hasNonNull("message");
+    }
+
+    private void ensureReaderStarted() {
+        if (readerStarted.compareAndSet(false, true)) {
+            long readerGeneration = transport.generation();
+            Thread.ofVirtual().name("autohand-rpc-dispatcher")
+                    .start(() -> readLoop(readerGeneration));
+        }
+    }
+
+    private void readLoop(long readerGeneration) {
+        try {
+            while (true) {
+                String line = transport.takeLine(Duration.ofSeconds(1), readerGeneration);
+                if (line == null) {
+                    continue;
+                }
+
+                JsonNode message = parseLine(line);
+                if (message == null) {
+                    continue;
+                }
+
+                if (message.has("method") && !message.has("id")) {
+                    EventContext context = activeEventContext.get();
+                    if (context != null) {
+                        context.dispatch(toEvent(message));
+                    }
+                    continue;
+                }
+
+                if (message.has("id")) {
+                    CompletableFuture<JsonNode> response = pendingRequests.get(idKey(message.get("id")));
+                    if (response != null) {
+                        response.complete(message);
+                    }
+                }
+            }
+        } catch (RuntimeException failure) {
+            readerFailure = failure;
+            pendingRequests.forEach((id, response) -> {
+                if (pendingRequests.remove(id, response)) {
+                    response.completeExceptionally(failure);
+                }
+            });
+        }
     }
 
     private JsonNode responseResult(String method, JsonNode response) {
@@ -538,5 +622,39 @@ public final class RPCClient {
             }
         }
         return defaultValue;
+    }
+
+    private static final class EventContext {
+        private final Consumer<Event> consumer;
+        private CompletableFuture<Void> tail = CompletableFuture.completedFuture(null);
+
+        private EventContext(Consumer<Event> consumer) {
+            this.consumer = consumer;
+        }
+
+        private synchronized void dispatch(Event event) {
+            tail = tail.thenRunAsync(() -> consumer.accept(event), EVENT_EXECUTOR);
+        }
+
+        private void await(long timeoutMs) {
+            CompletableFuture<Void> snapshot;
+            synchronized (this) {
+                snapshot = tail;
+            }
+            try {
+                snapshot.get(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (TimeoutException exception) {
+                throw new RequestTimeoutException("event callbacks", timeoutMs);
+            } catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+                throw new TransportException("Interrupted while delivering Autohand RPC events.", exception);
+            } catch (ExecutionException exception) {
+                Throwable cause = exception.getCause();
+                if (cause instanceof RuntimeException runtimeException) {
+                    throw runtimeException;
+                }
+                throw new TransportException("Autohand event callback failed.", cause);
+            }
+        }
     }
 }

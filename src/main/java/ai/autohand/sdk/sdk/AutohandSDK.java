@@ -50,17 +50,22 @@ public final class AutohandSDK implements AutoCloseable {
             return;
         }
         rebuildClient();
-        transport.start();
-        if (baseConfig.features() != null) {
-            Map<String, Object> features = MAPPER.convertValue(baseConfig.features(),
-                    MAPPER.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
-            client.applyFlagSettings(Map.of("features", features));
-        }
-        if (pendingPermissionMode != null) {
-            client.setPermissionMode(pendingPermissionMode);
-        }
-        if (pendingPlanMode != null) {
-            client.setPlanMode(pendingPlanMode);
+        try {
+            transport.start();
+            if (baseConfig.features() != null) {
+                Map<String, Object> features = MAPPER.convertValue(baseConfig.features(),
+                        MAPPER.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
+                client.applyFlagSettings(Map.of("features", features));
+            }
+            if (pendingPermissionMode != null) {
+                client.setPermissionMode(pendingPermissionMode);
+            }
+            if (pendingPlanMode != null) {
+                client.setPlanMode(pendingPlanMode);
+            }
+        } catch (IOException | RuntimeException exception) {
+            transport.close();
+            throw exception;
         }
     }
 
@@ -271,6 +276,20 @@ public final class AutohandSDK implements AutoCloseable {
         return RPCClient.convert(client.getMessages(), GetMessagesResult.class);
     }
 
+    public CommunitySkills.RegistryResult getSkillsRegistry() {
+        return getSkillsRegistry(CommunitySkills.RegistryParams.cached());
+    }
+
+    public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
+        ensureStarted();
+        return client.getSkillsRegistry(params);
+    }
+
+    public CommunitySkills.InstallResult installSkill(CommunitySkills.InstallParams params) {
+        ensureStarted();
+        return client.installSkill(params);
+    }
+
     public ContextUsage getContextUsage() {
         ensureStarted();
         return RPCClient.convert(client.getContextUsage(), ContextUsage.class);
@@ -303,6 +322,25 @@ public final class AutohandSDK implements AutoCloseable {
     public void setMcpServers(Map<String, McpServerConfig> servers) {
         ensureStarted();
         client.setMcpServers(servers);
+    }
+
+    public McpDiscovery.ListServersResult listMcpServers() {
+        ensureStarted();
+        return client.listMcpServers();
+    }
+
+    public McpDiscovery.ListToolsResult listMcpTools() {
+        return listMcpTools(McpDiscovery.ListToolsParams.allServers());
+    }
+
+    public McpDiscovery.ListToolsResult listMcpTools(McpDiscovery.ListToolsParams params) {
+        ensureStarted();
+        return client.listMcpTools(params);
+    }
+
+    public McpDiscovery.GetServerConfigsResult getMcpServerConfigs() {
+        ensureStarted();
+        return client.getMcpServerConfigs();
     }
 
     public void toggleMCPServer(String serverName, boolean enabled) {
