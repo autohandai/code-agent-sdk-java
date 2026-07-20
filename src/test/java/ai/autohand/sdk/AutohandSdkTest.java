@@ -9,6 +9,7 @@ import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.transport.TransportConfig;
 import ai.autohand.sdk.types.ContextUsage;
 import ai.autohand.sdk.types.Autoresearch;
+import ai.autohand.sdk.types.BrowserHandoff;
 import ai.autohand.sdk.types.CommunitySkills;
 import ai.autohand.sdk.types.Conversation;
 import ai.autohand.sdk.types.DecisionScope;
@@ -173,6 +174,23 @@ class AutohandSdkTest {
             Conversation.ResetResult result = sdk.reset();
 
             assertEquals("reset-session", result.sessionId());
+        }
+    }
+
+    @Test
+    void createsBrowserHandoffWithExactCamelCaseParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            BrowserHandoff.CreateResult result = sdk.createBrowserHandoff(
+                    new BrowserHandoff.CreateParams("extension-1", "https://example.test/install"));
+
+            assertEquals("handoff-token", result.token());
+            assertEquals("browser-session", result.sessionId());
+            assertEquals("https://example.test/handoff", result.url());
         }
     }
 

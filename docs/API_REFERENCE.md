@@ -76,6 +76,7 @@ sdk.stop();
 - `getAutoresearchPareto()`, `pinAutoresearch(...)`, `pruneAutoresearch(...)`
 - `getState()`, `getMessages()`
 - `reset()`: replaces the active conversation and returns its new session ID.
+- `createBrowserHandoff(BrowserHandoff.CreateParams params)`: creates an expiring browser attachment URL.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

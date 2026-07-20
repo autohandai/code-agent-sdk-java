@@ -119,6 +119,7 @@ Community skills and MCP discovery are typed as well: `getSkillsRegistry`,
 `getMcpServerConfigs`. See the [skills and MCP guide](./docs/skills-and-mcp.md).
 
 Use `reset()` to replace the active conversation and receive its new session ID.
+Create an expiring browser attachment URL with `createBrowserHandoff(...)`.
 
 For JSON output:
 

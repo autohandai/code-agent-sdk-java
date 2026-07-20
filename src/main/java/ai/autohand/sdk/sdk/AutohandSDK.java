@@ -281,6 +281,15 @@ public final class AutohandSDK implements AutoCloseable {
         return client.reset();
     }
 
+    public BrowserHandoff.CreateResult createBrowserHandoff() {
+        return createBrowserHandoff(BrowserHandoff.CreateParams.defaults());
+    }
+
+    public BrowserHandoff.CreateResult createBrowserHandoff(BrowserHandoff.CreateParams params) {
+        ensureStarted();
+        return client.createBrowserHandoff(params);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry() {
         return getSkillsRegistry(CommunitySkills.RegistryParams.cached());
     }

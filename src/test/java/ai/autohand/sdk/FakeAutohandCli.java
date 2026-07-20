@@ -257,6 +257,19 @@ public final class FakeAutohandCli {
                                     "id", "call-1", "name", "read_file", "args", Map.of("path", "README.md")))))));
                     case "autohand.reset" -> respond(id, Map.of(
                             "sessionId", request.path("params").isEmpty() ? "reset-session" : "unexpected-params"));
+                    case "autohand.browserHandoff.create" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 2
+                                && params.path("extensionId").asText().equals("extension-1")
+                                && params.path("installUrl").asText().equals("https://example.test/install");
+                        respond(id, Map.of(
+                                "token", exact ? "handoff-token" : "unexpected-params",
+                                "sessionId", "browser-session",
+                                "workspaceRoot", "/workspace",
+                                "createdAt", "2026-07-20T00:00:00Z",
+                                "expiresAt", "2026-07-20T00:05:00Z",
+                                "url", "https://example.test/handoff"));
+                    }
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(
