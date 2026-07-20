@@ -274,6 +274,20 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedPostResponseHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookPostResponseEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookPostResponseEvent.class::isInstance)
+                    .map(Events.HookPostResponseEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(Events.TokenUsageStatus.ACTUAL, event.tokensUsageStatus());
+            assertEquals(2, event.toolCallsCount());
+            assertEquals(250L, event.duration());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

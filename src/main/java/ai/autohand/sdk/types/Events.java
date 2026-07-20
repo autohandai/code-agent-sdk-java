@@ -12,6 +12,11 @@ public final class Events {
     private Events() {
     }
 
+    public enum TokenUsageStatus {
+        ACTUAL,
+        UNAVAILABLE
+    }
+
     public record AgentStartEvent(String sessionId, String model, String workspace, String timestamp) implements Event {
     }
 
@@ -150,6 +155,15 @@ public final class Events {
         public HookPrePromptEvent {
             mentionedFiles = mentionedFiles == null ? List.of() : List.copyOf(mentionedFiles);
         }
+    }
+
+    public record HookPostResponseEvent(
+            long tokensUsed,
+            TokenUsageStatus tokensUsageStatus,
+            int toolCallsCount,
+            long duration,
+            String timestamp
+    ) implements Event {
     }
 
     public record ErrorEvent(int code, String message, String timestamp) implements Event {

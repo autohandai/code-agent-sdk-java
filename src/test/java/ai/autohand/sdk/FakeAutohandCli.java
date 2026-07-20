@@ -69,6 +69,12 @@ public final class FakeAutohandCli {
                                 "instruction", "Review the SDK",
                                 "mentionedFiles", List.of("README.md", "pom.xml"),
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.postResponse", Map.of(
+                                "tokensUsed", 640,
+                                "tokensUsageStatus", "actual",
+                                "toolCallsCount", 2,
+                                "duration", 250,
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",

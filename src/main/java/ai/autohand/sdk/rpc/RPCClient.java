@@ -646,6 +646,12 @@ public final class RPCClient {
                     text(params, "instruction", null),
                     MAPPER.convertValue(params.path("mentionedFiles"), new TypeReference<List<String>>() { }),
                     timestamp);
+            case "autohand.hook.postResponse" -> new Events.HookPostResponseEvent(
+                    params.path("tokensUsed").asLong(0),
+                    tokenUsageStatus(text(params, "tokensUsageStatus", null)),
+                    params.path("toolCallsCount").asInt(0),
+                    params.path("duration").asLong(0),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),
@@ -671,6 +677,14 @@ public final class RPCClient {
 
     private static String idKey(JsonNode node) {
         return node.isTextual() ? node.asText() : Long.toString(node.asLong());
+    }
+
+    private static Events.TokenUsageStatus tokenUsageStatus(String value) {
+        return switch (value == null ? "" : value) {
+            case "actual" -> Events.TokenUsageStatus.ACTUAL;
+            case "unavailable" -> Events.TokenUsageStatus.UNAVAILABLE;
+            default -> null;
+        };
     }
 
     private static String text(JsonNode node, String firstKey, String defaultValue) {
