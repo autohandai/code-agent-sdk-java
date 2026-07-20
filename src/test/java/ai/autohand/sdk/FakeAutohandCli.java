@@ -58,6 +58,13 @@ public final class FakeAutohandCli {
                                 "toolName", "read_file",
                                 "args", Map.of("path", "README.md"),
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.postTool", Map.of(
+                                "toolId", "tool-call-1",
+                                "toolName", "read_file",
+                                "success", true,
+                                "duration", 18,
+                                "output", "contents",
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",

@@ -132,6 +132,16 @@ public final class Events {
         }
     }
 
+    public record HookPostToolEvent(
+            String toolId,
+            String toolName,
+            boolean success,
+            long duration,
+            String output,
+            String timestamp
+    ) implements Event {
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 
