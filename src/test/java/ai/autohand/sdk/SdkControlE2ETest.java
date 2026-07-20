@@ -4,12 +4,14 @@ import ai.autohand.sdk.sdk.AutohandSDK;
 import ai.autohand.sdk.types.PermissionAcknowledgement;
 import ai.autohand.sdk.types.DirectoryAccessResponse;
 import ai.autohand.sdk.types.DirectoryAccessAcknowledgement;
+import ai.autohand.sdk.types.ChangesDecision;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,6 +43,17 @@ class SdkControlE2ETest {
             DirectoryAccessAcknowledgement.Result result = sdk.acknowledgeDirectoryAccess("directory-1");
 
             assertTrue(result.success());
+        }
+    }
+
+    @Test
+    void decidesSelectedChangesThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            ChangesDecision.Result result = sdk.decideChanges(new ChangesDecision.Params(
+                    "batch-1", ChangesDecision.Action.ACCEPT_SELECTED, List.of("change-1")));
+
+            assertTrue(result.success());
+            assertTrue(result.errors().isEmpty());
         }
     }
 

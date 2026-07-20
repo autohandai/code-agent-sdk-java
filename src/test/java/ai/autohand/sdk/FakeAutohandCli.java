@@ -105,6 +105,19 @@ public final class FakeAutohandCli {
                         respond(id, Map.of("success", params.size() == 1
                                 && "directory-1".equals(params.path("requestId").asText())));
                     }
+                    case "autohand.changesDecision" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 3
+                                && "batch-1".equals(params.path("batchId").asText())
+                                && "accept_selected".equals(params.path("action").asText())
+                                && params.path("selectedChangeIds").size() == 1
+                                && "change-1".equals(params.path("selectedChangeIds").get(0).asText());
+                        respond(id, Map.of(
+                                "success", exact,
+                                "appliedCount", exact ? 1 : 0,
+                                "skippedCount", exact ? 1 : 2,
+                                "errors", List.of()));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

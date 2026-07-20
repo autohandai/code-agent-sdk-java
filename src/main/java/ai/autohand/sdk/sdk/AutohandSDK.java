@@ -486,6 +486,11 @@ public final class AutohandSDK implements AutoCloseable {
                 DirectoryAccessAcknowledgement.Result.class);
     }
 
+    public ChangesDecision.Result decideChanges(ChangesDecision.Params params) {
+        ensureStarted();
+        return client.request("autohand.changesDecision", params, ChangesDecision.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
