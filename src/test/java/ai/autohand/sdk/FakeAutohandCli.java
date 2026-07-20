@@ -118,6 +118,24 @@ public final class FakeAutohandCli {
                                 "skippedCount", exact ? 1 : 2,
                                 "errors", List.of()));
                     }
+                    case "autohand.getHistory" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 2
+                                && params.path("page").asInt() == 2
+                                && params.path("pageSize").asInt() == 25;
+                        respond(id, Map.of(
+                                "sessions", List.of(Map.of(
+                                        "sessionId", "session-history-1",
+                                        "createdAt", "2026-07-20T00:00:00Z",
+                                        "lastActiveAt", "2026-07-20T00:10:00Z",
+                                        "projectName", "java-sdk",
+                                        "model", "fantail",
+                                        "messageCount", exact ? 7 : -1,
+                                        "status", "completed")),
+                                "currentPage", 2,
+                                "totalPages", 3,
+                                "totalItems", 51));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

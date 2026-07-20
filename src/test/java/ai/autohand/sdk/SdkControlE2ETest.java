@@ -5,6 +5,7 @@ import ai.autohand.sdk.types.PermissionAcknowledgement;
 import ai.autohand.sdk.types.DirectoryAccessResponse;
 import ai.autohand.sdk.types.DirectoryAccessAcknowledgement;
 import ai.autohand.sdk.types.ChangesDecision;
+import ai.autohand.sdk.types.SessionHistory;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -54,6 +55,16 @@ class SdkControlE2ETest {
 
             assertTrue(result.success());
             assertTrue(result.errors().isEmpty());
+        }
+    }
+
+    @Test
+    void getsTypedSessionHistoryThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            SessionHistory.Result result = sdk.getHistory(new SessionHistory.Params(2, 25));
+
+            assertTrue(result.sessions().getFirst().status() == SessionHistory.Status.COMPLETED);
+            assertTrue(result.sessions().getFirst().messageCount() == 7);
         }
     }
 

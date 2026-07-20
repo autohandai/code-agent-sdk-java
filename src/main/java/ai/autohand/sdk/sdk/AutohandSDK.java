@@ -491,6 +491,13 @@ public final class AutohandSDK implements AutoCloseable {
         return client.request("autohand.changesDecision", params, ChangesDecision.Result.class);
     }
 
+    public SessionHistory.Result getHistory(SessionHistory.Params params) {
+        ensureStarted();
+        return client.request("autohand.getHistory",
+                params == null ? SessionHistory.Params.defaults() : params,
+                SessionHistory.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
