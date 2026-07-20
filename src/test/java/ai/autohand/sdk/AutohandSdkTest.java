@@ -195,6 +195,23 @@ class AutohandSdkTest {
     }
 
     @Test
+    void attachesBrowserHandoffByExactToken() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            BrowserHandoff.AttachResult result = sdk.attachBrowserHandoff(
+                    new BrowserHandoff.AttachParams("handoff-token"));
+
+            assertTrue(result.success());
+            assertEquals("browser-session", result.sessionId());
+            assertEquals(3, result.messageCount());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

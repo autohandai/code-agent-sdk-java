@@ -270,6 +270,16 @@ public final class FakeAutohandCli {
                                 "expiresAt", "2026-07-20T00:05:00Z",
                                 "url", "https://example.test/handoff"));
                     }
+                    case "autohand.browserHandoff.attach" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 1
+                                && params.path("token").asText().equals("handoff-token");
+                        respond(id, Map.of(
+                                "success", exact,
+                                "sessionId", "browser-session",
+                                "workspaceRoot", "/workspace",
+                                "messageCount", 3));
+                    }
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

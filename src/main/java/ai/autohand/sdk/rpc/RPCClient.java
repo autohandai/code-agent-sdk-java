@@ -171,6 +171,10 @@ public final class RPCClient {
                 BrowserHandoff.CreateResult.class);
     }
 
+    public BrowserHandoff.AttachResult attachBrowserHandoff(BrowserHandoff.AttachParams params) {
+        return request("autohand.browserHandoff.attach", params, BrowserHandoff.AttachResult.class);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
                 CommunitySkills.RegistryResult.class);

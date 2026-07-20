@@ -120,6 +120,7 @@ Community skills and MCP discovery are typed as well: `getSkillsRegistry`,
 
 Use `reset()` to replace the active conversation and receive its new session ID.
 Create an expiring browser attachment URL with `createBrowserHandoff(...)`.
+Attach one by token with `attachBrowserHandoff(...)`.
 
 For JSON output:
 

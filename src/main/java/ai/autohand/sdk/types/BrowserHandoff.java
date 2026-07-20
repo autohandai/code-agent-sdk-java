@@ -19,4 +19,14 @@ public final class BrowserHandoff {
             String expiresAt,
             String url) {
     }
+
+    public record AttachParams(String token) {
+    }
+
+    public record AttachResult(
+            boolean success,
+            String sessionId,
+            String workspaceRoot,
+            Integer messageCount) {
+    }
 }
