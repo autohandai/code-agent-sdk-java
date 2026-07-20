@@ -3,6 +3,8 @@ package ai.autohand.sdk.types;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.List;
+
 /** Typed contracts for autonomous CLI runs. */
 public final class AutoMode {
     private AutoMode() {
@@ -74,5 +76,26 @@ public final class AutoMode {
         public static CancelParams withoutReason() {
             return new CancelParams(null);
         }
+    }
+
+    public record GetLogParams(Integer limit) {
+        public static GetLogParams defaults() {
+            return new GetLogParams(null);
+        }
+    }
+
+    public record LogCheckpoint(String commit, String message) {
+    }
+
+    public record Iteration(
+            int iteration,
+            String timestamp,
+            List<String> actions,
+            Integer tokensUsed,
+            Double cost,
+            LogCheckpoint checkpoint) {
+    }
+
+    public record LogResult(boolean success, List<Iteration> iterations, String error) {
     }
 }

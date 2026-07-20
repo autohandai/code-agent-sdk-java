@@ -322,6 +322,21 @@ public final class FakeAutohandCli {
                                 "success", params.size() == 1
                                         && params.path("reason").asText().equals("Operator requested stop")));
                     }
+                    case "autohand.automode.getLog" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 1 && params.path("limit").asInt() == 25;
+                        respond(id, Map.of(
+                                "success", exact,
+                                "iterations", List.of(Map.of(
+                                        "iteration", 2,
+                                        "timestamp", "2026-07-20T00:02:00Z",
+                                        "actions", List.of("edit", "test"),
+                                        "tokensUsed", 1200,
+                                        "cost", 0.08,
+                                        "checkpoint", Map.of(
+                                                "commit", "checkpoint-1",
+                                                "message", "iteration 2")))));
+                    }
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

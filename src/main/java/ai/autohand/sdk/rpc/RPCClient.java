@@ -202,6 +202,12 @@ public final class RPCClient {
                 AutoMode.OperationResult.class);
     }
 
+    public AutoMode.LogResult getAutoModeLog(AutoMode.GetLogParams params) {
+        return request("autohand.automode.getLog",
+                params == null ? AutoMode.GetLogParams.defaults() : params,
+                AutoMode.LogResult.class);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return request("autohand.getSkillsRegistry", params == null ? CommunitySkills.RegistryParams.cached() : params,
                 CommunitySkills.RegistryResult.class);

@@ -185,6 +185,14 @@ public final class Agent implements AutoCloseable {
         return sdk.cancelAutoMode(params);
     }
 
+    public AutoMode.LogResult getAutoModeLog() {
+        return sdk.getAutoModeLog();
+    }
+
+    public AutoMode.LogResult getAutoModeLog(AutoMode.GetLogParams params) {
+        return sdk.getAutoModeLog(params);
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {
         return sdk.getSkillsRegistry(params);
     }

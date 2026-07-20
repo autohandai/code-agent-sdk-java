@@ -309,6 +309,24 @@ class AutohandSdkTest {
     }
 
     @Test
+    void getsTypedAutoModeIterationLogWithExactLimit() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            AutoMode.LogResult result = sdk.getAutoModeLog(new AutoMode.GetLogParams(25));
+
+            assertTrue(result.success());
+            assertEquals(1, result.iterations().size());
+            assertEquals(List.of("edit", "test"), result.iterations().getFirst().actions());
+            assertEquals(1200, result.iterations().getFirst().tokensUsed());
+            assertEquals("checkpoint-1", result.iterations().getFirst().checkpoint().commit());
+        }
+    }
+
+    @Test
     void serializesConcurrentStreamsSoEventsCannotCrossTalk() throws Exception {
         try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

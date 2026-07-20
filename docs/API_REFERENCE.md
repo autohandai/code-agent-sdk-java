@@ -84,6 +84,7 @@ sdk.stop();
 - `pauseAutoMode()`: pauses the active autonomous run.
 - `resumeAutoMode()`: resumes the paused autonomous run.
 - `cancelAutoMode(AutoMode.CancelParams params)`: cancels a run with an optional reason.
+- `getAutoModeLog(AutoMode.GetLogParams params)`: returns typed iteration actions, usage, cost, and checkpoints.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

@@ -127,6 +127,7 @@ Inspect progress and checkpoint metadata with `getAutoModeStatus()`.
 Pause an active autonomous run with `pauseAutoMode()`.
 Resume it with `resumeAutoMode()`.
 Cancel with an optional audit reason through `cancelAutoMode(...)`.
+Read typed iteration history with `getAutoModeLog(...)`.
 
 For JSON output:
 
