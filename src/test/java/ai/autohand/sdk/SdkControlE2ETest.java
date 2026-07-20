@@ -261,6 +261,19 @@ class SdkControlE2ETest {
         }
     }
 
+    @Test
+    void streamsTypedPrePromptHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookPrePromptEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookPrePromptEvent.class::isInstance)
+                    .map(Events.HookPrePromptEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("Review the SDK", event.instruction());
+            assertEquals(List.of("README.md", "pom.xml"), event.mentionedFiles());
+        }
+    }
+
     private AutohandSDK startedSdk() throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
                 .cwd(tempDir.toString())

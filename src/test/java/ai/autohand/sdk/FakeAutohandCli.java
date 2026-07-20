@@ -65,6 +65,10 @@ public final class FakeAutohandCli {
                                 "duration", 18,
                                 "output", "contents",
                                 "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.prePrompt", Map.of(
+                                "instruction", "Review the SDK",
+                                "mentionedFiles", List.of("README.md", "pom.xml"),
+                                "timestamp", Instant.now().toString()));
                         notify("autohand.autoresearch.status", Map.of(
                                 "active", true,
                                 "goal", "Improve SDK reliability",

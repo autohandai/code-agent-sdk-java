@@ -11,5 +11,6 @@ public sealed interface Event permits Events.AgentStartEvent, Events.AgentEndEve
         Events.AutoModeErrorEvent,
         Events.HookPreToolEvent,
         Events.HookPostToolEvent,
+        Events.HookPrePromptEvent,
         Events.ErrorEvent, Events.UnknownEvent {
 }

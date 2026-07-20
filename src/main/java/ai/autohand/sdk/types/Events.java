@@ -142,6 +142,16 @@ public final class Events {
     ) implements Event {
     }
 
+    public record HookPrePromptEvent(
+            String instruction,
+            List<String> mentionedFiles,
+            String timestamp
+    ) implements Event {
+        public HookPrePromptEvent {
+            mentionedFiles = mentionedFiles == null ? List.of() : List.copyOf(mentionedFiles);
+        }
+    }
+
     public record ErrorEvent(int code, String message, String timestamp) implements Event {
     }
 

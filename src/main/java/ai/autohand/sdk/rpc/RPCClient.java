@@ -642,6 +642,10 @@ public final class RPCClient {
                     params.path("duration").asLong(0),
                     text(params, "output", null),
                     timestamp);
+            case "autohand.hook.prePrompt" -> new Events.HookPrePromptEvent(
+                    text(params, "instruction", null),
+                    MAPPER.convertValue(params.path("mentionedFiles"), new TypeReference<List<String>>() { }),
+                    timestamp);
             case "autohand.error" -> new Events.ErrorEvent(
                     params.path("code").asInt(0),
                     text(params, "message", "Unknown Autohand error"),
