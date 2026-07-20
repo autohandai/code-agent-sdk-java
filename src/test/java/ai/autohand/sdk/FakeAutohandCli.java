@@ -255,6 +255,8 @@ public final class FakeAutohandCli {
                             "timestamp", "2026-07-20T00:00:00Z",
                             "toolCalls", List.of(Map.of(
                                     "id", "call-1", "name", "read_file", "args", Map.of("path", "README.md")))))));
+                    case "autohand.reset" -> respond(id, Map.of(
+                            "sessionId", request.path("params").isEmpty() ? "reset-session" : "unexpected-params"));
                     case "autohand.getSkillsRegistry" -> respond(id, Map.of(
                             "success", true,
                             "skills", List.of(Map.of(

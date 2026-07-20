@@ -75,6 +75,7 @@ sdk.stop();
 - `replayAutoresearch(...)`, `rescoreAutoresearch(...)`, `compareAutoresearch(...)`
 - `getAutoresearchPareto()`, `pinAutoresearch(...)`, `pruneAutoresearch(...)`
 - `getState()`, `getMessages()`
+- `reset()`: replaces the active conversation and returns its new session ID.
 - `getSkillsRegistry()`, `getSkillsRegistry(CommunitySkills.RegistryParams params)`
 - `installSkill(CommunitySkills.InstallParams params)`
 - `getContextUsage()`: returns `ContextUsage`

@@ -8,6 +8,7 @@ import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
 import ai.autohand.sdk.types.Autoresearch;
 import ai.autohand.sdk.types.CommunitySkills;
+import ai.autohand.sdk.types.Conversation;
 import ai.autohand.sdk.types.Goals;
 import ai.autohand.sdk.types.HookDefinition;
 import ai.autohand.sdk.types.HookEvent;
@@ -157,6 +158,10 @@ public final class RPCClient {
 
     public JsonNode getMessages() {
         return request("autohand.getMessages", Map.of());
+    }
+
+    public Conversation.ResetResult reset() {
+        return request("autohand.reset", Map.of(), Conversation.ResetResult.class);
     }
 
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {

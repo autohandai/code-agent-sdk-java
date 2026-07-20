@@ -276,6 +276,11 @@ public final class AutohandSDK implements AutoCloseable {
         return RPCClient.convert(client.getMessages(), GetMessagesResult.class);
     }
 
+    public Conversation.ResetResult reset() {
+        ensureStarted();
+        return client.reset();
+    }
+
     public CommunitySkills.RegistryResult getSkillsRegistry() {
         return getSkillsRegistry(CommunitySkills.RegistryParams.cached());
     }

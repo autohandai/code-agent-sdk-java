@@ -10,6 +10,7 @@ import ai.autohand.sdk.transport.TransportConfig;
 import ai.autohand.sdk.types.ContextUsage;
 import ai.autohand.sdk.types.Autoresearch;
 import ai.autohand.sdk.types.CommunitySkills;
+import ai.autohand.sdk.types.Conversation;
 import ai.autohand.sdk.types.DecisionScope;
 import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
@@ -158,6 +159,20 @@ class AutohandSdkTest {
             assertEquals(2, servers.servers().getFirst().toolCount());
             assertEquals("github", tools.tools().getFirst().serverName());
             assertEquals(McpDiscovery.Transport.STDIO, configs.configs().getFirst().transport());
+        }
+    }
+
+    @Test
+    void resetsConversationWithExactEmptyParameters() throws Exception {
+        try (AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .cwd(tempDir.toString())
+                .cliPath(fakeCli().toString())
+                .build())) {
+            sdk.start();
+
+            Conversation.ResetResult result = sdk.reset();
+
+            assertEquals("reset-session", result.sessionId());
         }
     }
 

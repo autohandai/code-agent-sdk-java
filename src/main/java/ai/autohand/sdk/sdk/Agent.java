@@ -6,6 +6,7 @@ import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.SDKConfig;
 import ai.autohand.sdk.types.Autoresearch;
 import ai.autohand.sdk.types.CommunitySkills;
+import ai.autohand.sdk.types.Conversation;
 import ai.autohand.sdk.types.Goals;
 import ai.autohand.sdk.types.McpDiscovery;
 
@@ -136,6 +137,10 @@ public final class Agent implements AutoCloseable {
 
     public CommunitySkills.RegistryResult getSkillsRegistry() {
         return sdk.getSkillsRegistry();
+    }
+
+    public Conversation.ResetResult reset() {
+        return sdk.reset();
     }
 
     public CommunitySkills.RegistryResult getSkillsRegistry(CommunitySkills.RegistryParams params) {

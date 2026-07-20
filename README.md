@@ -118,6 +118,8 @@ Community skills and MCP discovery are typed as well: `getSkillsRegistry`,
 `installSkill`, `listMcpServers`, `listMcpTools`, and
 `getMcpServerConfigs`. See the [skills and MCP guide](./docs/skills-and-mcp.md).
 
+Use `reset()` to replace the active conversation and receive its new session ID.
+
 For JSON output:
 
 ```java
