@@ -170,6 +170,18 @@ public final class FakeAutohandCli {
                                 "workspaceRoot", "/workspace",
                                 "messageCount", 9));
                     }
+                    case "autohand.yoloSet" -> {
+                        JsonNode params = request.path("params");
+                        boolean exact = params.size() == 2
+                                && "*".equals(params.path("pattern").asText())
+                                && params.path("timeoutSeconds").asInt() == 60;
+                        respond(id, Map.of("success", exact, "expiresIn", 60));
+                    }
+                    case "autohand.yolo.set" -> {
+                        JsonNode params = request.path("params");
+                        respond(id, Map.of("success", params.size() == 1
+                                && params.path("pattern").asText().isEmpty()));
+                    }
                     case "autohand.permissionResponse",
                             "autohand.permissionModeSet",
                             "autohand.planModeSet",

@@ -8,6 +8,7 @@ import ai.autohand.sdk.types.ChangesDecision;
 import ai.autohand.sdk.types.SessionHistory;
 import ai.autohand.sdk.types.SessionDetails;
 import ai.autohand.sdk.types.SessionAttachment;
+import ai.autohand.sdk.types.YoloMode;
 import ai.autohand.sdk.types.SDKConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -92,6 +93,18 @@ class SdkControlE2ETest {
 
             assertTrue(result.success());
             assertEquals(9, result.messageCount());
+        }
+    }
+
+    @Test
+    void setsTimedYoloModeAndSupportsDottedAliasThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            YoloMode.Result enabled = sdk.setYoloMode(new YoloMode.Params("*", 60));
+            YoloMode.Result disabledViaAlias = sdk.setYoloModeAlias(new YoloMode.Params("", null));
+
+            assertTrue(enabled.success());
+            assertEquals(60, enabled.expiresIn());
+            assertTrue(disabledViaAlias.success());
         }
     }
 

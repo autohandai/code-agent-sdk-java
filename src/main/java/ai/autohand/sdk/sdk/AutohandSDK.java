@@ -514,6 +514,17 @@ public final class AutohandSDK implements AutoCloseable {
                 new SessionAttachment.Params(sessionId), SessionAttachment.Result.class);
     }
 
+    public YoloMode.Result setYoloMode(YoloMode.Params params) {
+        ensureStarted();
+        return client.request("autohand.yoloSet", params, YoloMode.Result.class);
+    }
+
+    /** Compatibility entry point for CLI versions that expose the dotted alias. */
+    public YoloMode.Result setYoloModeAlias(YoloMode.Params params) {
+        ensureStarted();
+        return client.request("autohand.yolo.set", params, YoloMode.Result.class);
+    }
+
     public HookResultTypes.GetHooksResult getHooks() {
         ensureStarted();
         JsonNode result = client.getHooks();
