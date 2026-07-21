@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
@@ -39,6 +40,9 @@ public final class FakeAutohandCli {
                                 ? requestedMessage : "hello from java";
                         if (requestedMessage.equals("malformed-feature-event")) {
                             notifyMalformedFeatureEvents();
+                        }
+                        if (requestedMessage.equals("out-of-range-hook-integers")) {
+                            notifyOutOfRangeHookIntegers();
                         }
                         notify("autohand.automode.iteration", Map.of(
                                 "sessionId", "auto-session",
@@ -77,6 +81,67 @@ public final class FakeAutohandCli {
                                 "tokensUsageStatus", "actual",
                                 "toolCallsCount", 2,
                                 "duration", 250,
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.fileModified", Map.of(
+                                "filePath", "src/Main.java",
+                                "changeType", "create",
+                                "toolId", "tool-call-1",
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.sessionError", Map.of(
+                                "error", "Rate limited",
+                                "code", "RATE_LIMIT",
+                                "context", Map.of("retryAfter", 60),
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.stop", Map.of(
+                                "tokensUsed", 700,
+                                "tokensUsageStatus", "unavailable",
+                                "toolCallsCount", 3,
+                                "duration", 300.5,
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.sessionStart", Map.of(
+                                "sessionType", "resume",
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.sessionEnd", Map.of(
+                                "reason", "clear",
+                                "duration", 450.5,
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.subagentStop", Map.of(
+                                "subagentId", "subagent-1",
+                                "subagentName", "reviewer",
+                                "subagentType", "code-review",
+                                "success", false,
+                                "duration", 75.5,
+                                "error", "Review failed",
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.permissionRequest", Map.of(
+                                "tool", "write_file",
+                                "path", "README.md",
+                                "command", "write README.md",
+                                "args", Map.of("content", "updated"),
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.notification", Map.of(
+                                "notificationType", "warning",
+                                "message", "Context is nearly full",
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.contextCompacted", Map.of(
+                                "croppedCount", 4,
+                                "summary", "Earlier turns summarized",
+                                "usagePercent", 0.6125,
+                                "reason", "threshold",
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.contextOverflow", Map.of(
+                                "tokensBefore", 120_000,
+                                "tokensAfter", 80_000,
+                                "croppedCount", 6,
+                                "usagePercent", 1.05,
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.contextWarning", Map.of(
+                                "usagePercent", 0.805,
+                                "remainingTokens", 12_000,
+                                "timestamp", Instant.now().toString()));
+                        notify("autohand.hook.contextCritical", Map.of(
+                                "usagePercent", 0.9575,
+                                "remainingTokens", 3_000,
                                 "timestamp", Instant.now().toString()));
                         notify("autohand.mcp.invokeRequest", Map.of(
                                 "requestId", "mcp-invoke-1",
@@ -663,6 +728,73 @@ public final class FakeAutohandCli {
                 Map.entry("duration", 250),
                 Map.entry("timestamp", timestamp),
                 Map.entry("malformedMarker", "autohand.hook.postResponse")));
+        notify("autohand.hook.fileModified", Map.ofEntries(
+                Map.entry("filePath", "src/Main.java"),
+                Map.entry("changeType", "renamed"),
+                Map.entry("toolId", "tool-call-1"),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.fileModified")));
+        notify("autohand.hook.sessionError", Map.ofEntries(
+                Map.entry("error", 42),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.sessionError")));
+        notify("autohand.hook.stop", Map.ofEntries(
+                Map.entry("tokensUsed", 700),
+                Map.entry("tokensUsageStatus", "estimated"),
+                Map.entry("toolCallsCount", 3),
+                Map.entry("duration", 300.5),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.stop")));
+        notify("autohand.hook.sessionStart", Map.ofEntries(
+                Map.entry("sessionType", "restart"),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.sessionStart")));
+        notify("autohand.hook.sessionEnd", Map.ofEntries(
+                Map.entry("reason", "timeout"),
+                Map.entry("duration", 450.5),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.sessionEnd")));
+        notify("autohand.hook.subagentStop", Map.ofEntries(
+                Map.entry("subagentId", "subagent-1"),
+                Map.entry("subagentName", "reviewer"),
+                Map.entry("subagentType", "code-review"),
+                Map.entry("success", "yes"),
+                Map.entry("duration", 75.5),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.subagentStop")));
+        notify("autohand.hook.permissionRequest", Map.ofEntries(
+                Map.entry("tool", "write_file"),
+                Map.entry("args", List.of("README.md")),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.permissionRequest")));
+        notify("autohand.hook.notification", Map.ofEntries(
+                Map.entry("notificationType", "warning"),
+                Map.entry("message", 42),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.notification")));
+        notify("autohand.hook.contextCompacted", Map.ofEntries(
+                Map.entry("croppedCount", -1),
+                Map.entry("usagePercent", 0.6125),
+                Map.entry("reason", "threshold"),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.contextCompacted")));
+        notify("autohand.hook.contextOverflow", Map.ofEntries(
+                Map.entry("tokensBefore", -1),
+                Map.entry("tokensAfter", 80_000),
+                Map.entry("croppedCount", 6),
+                Map.entry("usagePercent", 1.05),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.contextOverflow")));
+        notify("autohand.hook.contextWarning", Map.ofEntries(
+                Map.entry("usagePercent", 0.805),
+                Map.entry("remainingTokens", -1),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.contextWarning")));
+        notify("autohand.hook.contextCritical", Map.ofEntries(
+                Map.entry("usagePercent", -0.01),
+                Map.entry("remainingTokens", 3_000),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "autohand.hook.contextCritical")));
         notify("autohand.mcp.invokeRequest", Map.ofEntries(
                 Map.entry("requestId", "mcp-invoke-1"),
                 Map.entry("toolName", "vscode__github__search"),
@@ -679,6 +811,24 @@ public final class FakeAutohandCli {
                 Map.entry("status", "unknown"),
                 Map.entry("timestamp", timestamp),
                 Map.entry("malformedMarker", "autohand.learn.progress")));
+    }
+
+    private static void notifyOutOfRangeHookIntegers() throws Exception {
+        String timestamp = Instant.now().toString();
+        notify("autohand.hook.postResponse", Map.ofEntries(
+                Map.entry("tokensUsed", new BigInteger("9223372036854775808")),
+                Map.entry("tokensUsageStatus", "actual"),
+                Map.entry("toolCallsCount", 2),
+                Map.entry("duration", 250),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "post-response-out-of-range")));
+        notify("autohand.hook.stop", Map.ofEntries(
+                Map.entry("tokensUsed", 700),
+                Map.entry("tokensUsageStatus", "unavailable"),
+                Map.entry("toolCallsCount", new BigInteger("2147483648")),
+                Map.entry("duration", 300.5),
+                Map.entry("timestamp", timestamp),
+                Map.entry("malformedMarker", "stop-out-of-range")));
     }
 
     private static void startControlConcurrencyPrompt(JsonNode id) {

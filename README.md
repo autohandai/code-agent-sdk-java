@@ -170,6 +170,13 @@ sdk.streamPrompt(new PromptParams("Analyze the codebase"), event -> {
 sdk.stop();
 ```
 
+All 16 `autohand.hook.*` notifications have typed Java events. Unknown
+notifications and malformed known hooks remain observable as
+`Events.UnknownEvent`, whose `params()` preserves the original JSON value,
+including array, `null`, and scalar top-level shapes. See
+[Event Streaming](./docs/event-streaming.md#typed-hook-notifications) for the
+complete method-to-record map and numeric validation rules.
+
 ## Architecture
 
 ```

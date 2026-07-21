@@ -289,6 +289,139 @@ class SdkControlE2ETest {
     }
 
     @Test
+    void streamsTypedFileModifiedHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.FileModifiedEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.FileModifiedEvent.class::isInstance)
+                    .map(Events.FileModifiedEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("src/Main.java", event.filePath());
+            assertEquals("create", event.changeType());
+            assertEquals(Events.FileChangeType.CREATE, event.fileChangeType());
+            assertEquals("tool-call-1", event.toolCallId());
+            assertEquals("tool-call-1", event.toolId());
+        }
+    }
+
+    @Test
+    void streamsTypedSessionErrorHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookSessionErrorEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookSessionErrorEvent.class::isInstance)
+                    .map(Events.HookSessionErrorEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("RATE_LIMIT", event.code());
+            assertEquals(60, event.context().get("retryAfter"));
+        }
+    }
+
+    @Test
+    void streamsTypedStopHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookStopEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookStopEvent.class::isInstance)
+                    .map(Events.HookStopEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(Events.TokenUsageStatus.UNAVAILABLE, event.tokensUsageStatus());
+            assertEquals(3, event.toolCallsCount());
+            assertEquals(300.5, event.duration());
+        }
+    }
+
+    @Test
+    void streamsTypedSessionLifecycleHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            List<Event> events = streamFeatureEvents(sdk);
+            Events.HookSessionStartEvent started = events.stream()
+                    .filter(Events.HookSessionStartEvent.class::isInstance)
+                    .map(Events.HookSessionStartEvent.class::cast)
+                    .findFirst().orElseThrow();
+            Events.HookSessionEndEvent ended = events.stream()
+                    .filter(Events.HookSessionEndEvent.class::isInstance)
+                    .map(Events.HookSessionEndEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(Events.HookSessionType.RESUME, started.sessionType());
+            assertEquals(Events.HookSessionEndReason.CLEAR, ended.reason());
+            assertEquals(450.5, ended.duration());
+        }
+    }
+
+    @Test
+    void streamsTypedSubagentStopHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookSubagentStopEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookSubagentStopEvent.class::isInstance)
+                    .map(Events.HookSubagentStopEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("reviewer", event.subagentName());
+            assertEquals("code-review", event.subagentType());
+            assertEquals("Review failed", event.error());
+        }
+    }
+
+    @Test
+    void streamsTypedPermissionRequestHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookPermissionRequestEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookPermissionRequestEvent.class::isInstance)
+                    .map(Events.HookPermissionRequestEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("README.md", event.path());
+            assertEquals("updated", event.args().get("content"));
+        }
+    }
+
+    @Test
+    void streamsTypedNotificationHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            Events.HookNotificationEvent event = streamFeatureEvents(sdk).stream()
+                    .filter(Events.HookNotificationEvent.class::isInstance)
+                    .map(Events.HookNotificationEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals("warning", event.notificationType());
+            assertEquals("Context is nearly full", event.message());
+        }
+    }
+
+    @Test
+    void streamsTypedContextHookEventsFromSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            List<Event> events = streamFeatureEvents(sdk);
+            Events.HookContextCompactedEvent compacted = events.stream()
+                    .filter(Events.HookContextCompactedEvent.class::isInstance)
+                    .map(Events.HookContextCompactedEvent.class::cast)
+                    .findFirst().orElseThrow();
+            Events.HookContextOverflowEvent overflow = events.stream()
+                    .filter(Events.HookContextOverflowEvent.class::isInstance)
+                    .map(Events.HookContextOverflowEvent.class::cast)
+                    .findFirst().orElseThrow();
+            Events.HookContextWarningEvent warning = events.stream()
+                    .filter(Events.HookContextWarningEvent.class::isInstance)
+                    .map(Events.HookContextWarningEvent.class::cast)
+                    .findFirst().orElseThrow();
+            Events.HookContextCriticalEvent critical = events.stream()
+                    .filter(Events.HookContextCriticalEvent.class::isInstance)
+                    .map(Events.HookContextCriticalEvent.class::cast)
+                    .findFirst().orElseThrow();
+
+            assertEquals(0.6125, compacted.usagePercent());
+            assertEquals("Earlier turns summarized", compacted.summary());
+            assertEquals(120_000, overflow.tokensBefore());
+            assertEquals(1.05, overflow.usagePercent());
+            assertEquals(0.805, warning.usagePercent());
+            assertEquals(12_000, warning.remainingTokens());
+            assertEquals(0.9575, critical.usagePercent());
+        }
+    }
+
+    @Test
     void streamsTypedMcpInvocationRequestsFromSpawnedCli() throws Exception {
         try (AutohandSDK sdk = startedSdk()) {
             Events.McpInvocationRequestEvent event = streamFeatureEvents(sdk).stream()
@@ -340,6 +473,18 @@ class SdkControlE2ETest {
                     Events.HookPostToolEvent.class,
                     Events.HookPrePromptEvent.class,
                     Events.HookPostResponseEvent.class,
+                    Events.FileModifiedEvent.class,
+                    Events.HookSessionErrorEvent.class,
+                    Events.HookStopEvent.class,
+                    Events.HookSessionStartEvent.class,
+                    Events.HookSessionEndEvent.class,
+                    Events.HookSubagentStopEvent.class,
+                    Events.HookPermissionRequestEvent.class,
+                    Events.HookNotificationEvent.class,
+                    Events.HookContextCompactedEvent.class,
+                    Events.HookContextOverflowEvent.class,
+                    Events.HookContextWarningEvent.class,
+                    Events.HookContextCriticalEvent.class,
                     Events.McpInvocationRequestEvent.class,
                     Events.McpToolsChangedEvent.class,
                     Events.LearnProgressEvent.class);
@@ -355,6 +500,18 @@ class SdkControlE2ETest {
                     "autohand.hook.postTool",
                     "autohand.hook.prePrompt",
                     "autohand.hook.postResponse",
+                    "autohand.hook.fileModified",
+                    "autohand.hook.sessionError",
+                    "autohand.hook.stop",
+                    "autohand.hook.sessionStart",
+                    "autohand.hook.sessionEnd",
+                    "autohand.hook.subagentStop",
+                    "autohand.hook.permissionRequest",
+                    "autohand.hook.notification",
+                    "autohand.hook.contextCompacted",
+                    "autohand.hook.contextOverflow",
+                    "autohand.hook.contextWarning",
+                    "autohand.hook.contextCritical",
                     "autohand.mcp.invokeRequest",
                     "autohand.mcp.toolsChanged",
                     "autohand.learn.progress");
@@ -374,6 +531,30 @@ class SdkControlE2ETest {
                     .filter(event -> "autohand.customFutureEvent".equals(event.method()))
                     .findFirst().orElseThrow();
             assertEquals("kept for forward compatibility", future.params().path("meaning").asText());
+        }
+    }
+
+    @Test
+    void mapsOutOfRangeHookIntegersToRawUnknownEvents() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            List<Event> events = new ArrayList<>();
+            sdk.streamPrompt(new PromptParams("out-of-range-hook-integers"), events::add);
+
+            Events.UnknownEvent postResponse = events.stream()
+                    .filter(Events.UnknownEvent.class::isInstance)
+                    .map(Events.UnknownEvent.class::cast)
+                    .filter(event -> "autohand.hook.postResponse".equals(event.method()))
+                    .findFirst().orElseThrow();
+            assertEquals("9223372036854775808", postResponse.params().path("tokensUsed").asText());
+            assertEquals("post-response-out-of-range", postResponse.params().path("malformedMarker").asText());
+
+            Events.UnknownEvent stop = events.stream()
+                    .filter(Events.UnknownEvent.class::isInstance)
+                    .map(Events.UnknownEvent.class::cast)
+                    .filter(event -> "autohand.hook.stop".equals(event.method()))
+                    .findFirst().orElseThrow();
+            assertEquals("2147483648", stop.params().path("toolCallsCount").asText());
+            assertEquals("stop-out-of-range", stop.params().path("malformedMarker").asText());
         }
     }
 

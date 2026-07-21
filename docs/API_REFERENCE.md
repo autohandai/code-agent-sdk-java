@@ -125,8 +125,27 @@ Events implement the `Event` marker interface and are exposed as records under
 - `FileModifiedEvent`
 - `AutoresearchLifecycleEvent`
 - `AutoresearchOperationEvent`
+- `HookPreToolEvent`
+- `HookPostToolEvent`
+- `HookPrePromptEvent`
+- `HookPostResponseEvent`
+- `HookSessionErrorEvent`
+- `HookStopEvent`
+- `HookSessionStartEvent`
+- `HookSessionEndEvent`
+- `HookSubagentStopEvent`
+- `HookPermissionRequestEvent`
+- `HookNotificationEvent`
+- `HookContextCompactedEvent`
+- `HookContextOverflowEvent`
+- `HookContextWarningEvent`
+- `HookContextCriticalEvent`
 - `ErrorEvent`
 - `UnknownEvent`
+
+`FileModifiedEvent` is also the typed event for
+`autohand.hook.fileModified`. See [Event Streaming](event-streaming.md#typed-hook-notifications)
+for the complete hook mapping, validation rules, and raw fallback contract.
 
 Use Java 21 pattern matching:
 

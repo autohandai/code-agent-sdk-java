@@ -25,6 +25,25 @@ public final class Events {
         UPDATING
     }
 
+    public enum FileChangeType {
+        CREATE,
+        MODIFY,
+        DELETE
+    }
+
+    public enum HookSessionType {
+        STARTUP,
+        RESUME,
+        CLEAR
+    }
+
+    public enum HookSessionEndReason {
+        QUIT,
+        CLEAR,
+        EXIT,
+        ERROR
+    }
+
     public record AgentStartEvent(String sessionId, String model, String workspace, String timestamp) implements Event {
     }
 
@@ -78,6 +97,15 @@ public final class Events {
     public record FileModifiedEvent(String filePath, String changeType, String toolCallId, String timestamp) implements Event {
         public String toolId() {
             return toolCallId;
+        }
+
+        public FileChangeType fileChangeType() {
+            return switch (changeType) {
+                case "create" -> FileChangeType.CREATE;
+                case "modify" -> FileChangeType.MODIFY;
+                case "delete" -> FileChangeType.DELETE;
+                default -> throw new IllegalStateException("Unsupported file change type: " + changeType);
+            };
         }
     }
 
@@ -170,6 +198,102 @@ public final class Events {
             TokenUsageStatus tokensUsageStatus,
             int toolCallsCount,
             double duration,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookSessionErrorEvent(
+            String error,
+            String code,
+            Map<String, Object> context,
+            String timestamp
+    ) implements Event {
+        public HookSessionErrorEvent {
+            context = context == null
+                    ? null
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(context));
+        }
+    }
+
+    public record HookStopEvent(
+            long tokensUsed,
+            TokenUsageStatus tokensUsageStatus,
+            int toolCallsCount,
+            double duration,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookSessionStartEvent(HookSessionType sessionType, String timestamp) implements Event {
+    }
+
+    public record HookSessionEndEvent(
+            HookSessionEndReason reason,
+            double duration,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookSubagentStopEvent(
+            String subagentId,
+            String subagentName,
+            String subagentType,
+            boolean success,
+            double duration,
+            String error,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookPermissionRequestEvent(
+            String tool,
+            String path,
+            String command,
+            Map<String, Object> args,
+            String timestamp
+    ) implements Event {
+        public HookPermissionRequestEvent {
+            args = args == null
+                    ? null
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(args));
+        }
+    }
+
+    public record HookNotificationEvent(
+            String notificationType,
+            String message,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookContextCompactedEvent(
+            long croppedCount,
+            String summary,
+            double usagePercent,
+            String reason,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookContextOverflowEvent(
+            long tokensBefore,
+            long tokensAfter,
+            long croppedCount,
+            double usagePercent,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookContextWarningEvent(
+            double usagePercent,
+            long remainingTokens,
+            String timestamp
+    ) implements Event {
+    }
+
+    public record HookContextCriticalEvent(
+            double usagePercent,
+            long remainingTokens,
             String timestamp
     ) implements Event {
     }

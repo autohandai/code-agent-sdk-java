@@ -598,10 +598,12 @@ public final class RPCClient {
                     text(params, "tool", "toolName", "tool_name", null),
                     text(params, "description", "message", ""),
                     timestamp);
-            case "autohand.hook.fileModified" -> new Events.FileModifiedEvent(
+            case "autohand.hook.fileModified" -> !validHookFileModified(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.FileModifiedEvent(
                     text(params, "filePath", "file_path", "path", null),
-                    text(params, "changeType", "change_type", "modify"),
-                    text(params, "toolCallId", "tool_call_id", "toolId", "tool_id", null),
+                    text(params, "changeType", null),
+                    text(params, "toolId", null),
                     timestamp);
             case "autohand.autoresearch.start" -> autoresearchLifecycle("start", params, timestamp);
             case "autohand.autoresearch.status" -> autoresearchLifecycle("status", params, timestamp);
@@ -666,6 +668,88 @@ public final class RPCClient {
                     params.path("toolCallsCount").asInt(0),
                     params.path("duration").asDouble(0),
                     timestamp);
+            case "autohand.hook.sessionError" -> !validHookSessionError(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookSessionErrorEvent(
+                    text(params, "error", null),
+                    text(params, "code", null),
+                    params.hasNonNull("context")
+                            ? MAPPER.convertValue(params.path("context"), new TypeReference<Map<String, Object>>() { })
+                            : null,
+                    timestamp);
+            case "autohand.hook.stop" -> !validHookPostResponse(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookStopEvent(
+                    params.path("tokensUsed").asLong(0),
+                    tokenUsageStatus(text(params, "tokensUsageStatus", null)),
+                    params.path("toolCallsCount").asInt(0),
+                    params.path("duration").asDouble(0),
+                    timestamp);
+            case "autohand.hook.sessionStart" -> !validHookSessionStart(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookSessionStartEvent(
+                    hookSessionType(text(params, "sessionType", null)),
+                    timestamp);
+            case "autohand.hook.sessionEnd" -> !validHookSessionEnd(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookSessionEndEvent(
+                    hookSessionEndReason(text(params, "reason", null)),
+                    params.path("duration").asDouble(0),
+                    timestamp);
+            case "autohand.hook.subagentStop" -> !validHookSubagentStop(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookSubagentStopEvent(
+                    text(params, "subagentId", null),
+                    text(params, "subagentName", null),
+                    text(params, "subagentType", null),
+                    params.path("success").asBoolean(false),
+                    params.path("duration").asDouble(0),
+                    text(params, "error", null),
+                    timestamp);
+            case "autohand.hook.permissionRequest" -> !validHookPermissionRequest(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookPermissionRequestEvent(
+                    text(params, "tool", null),
+                    text(params, "path", null),
+                    text(params, "command", null),
+                    params.hasNonNull("args")
+                            ? MAPPER.convertValue(params.path("args"), new TypeReference<Map<String, Object>>() { })
+                            : null,
+                    timestamp);
+            case "autohand.hook.notification" -> !validHookNotification(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookNotificationEvent(
+                    text(params, "notificationType", null),
+                    text(params, "message", null),
+                    timestamp);
+            case "autohand.hook.contextCompacted" -> !validHookContextCompacted(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookContextCompactedEvent(
+                    params.path("croppedCount").asLong(0),
+                    text(params, "summary", null),
+                    params.path("usagePercent").asDouble(0),
+                    text(params, "reason", null),
+                    timestamp);
+            case "autohand.hook.contextOverflow" -> !validHookContextOverflow(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookContextOverflowEvent(
+                    params.path("tokensBefore").asLong(0),
+                    params.path("tokensAfter").asLong(0),
+                    params.path("croppedCount").asLong(0),
+                    params.path("usagePercent").asDouble(0),
+                    timestamp);
+            case "autohand.hook.contextWarning" -> !validHookContextUsage(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookContextWarningEvent(
+                    params.path("usagePercent").asDouble(0),
+                    params.path("remainingTokens").asLong(0),
+                    timestamp);
+            case "autohand.hook.contextCritical" -> !validHookContextUsage(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.HookContextCriticalEvent(
+                    params.path("usagePercent").asDouble(0),
+                    params.path("remainingTokens").asLong(0),
+                    timestamp);
             case "autohand.mcp.invokeRequest" -> !validMcpInvocationRequest(params)
                     ? new Events.UnknownEvent(method, params, timestamp)
                     : new Events.McpInvocationRequestEvent(
@@ -718,6 +802,34 @@ public final class RPCClient {
         };
     }
 
+    private static Events.FileChangeType fileChangeType(String value) {
+        return switch (value == null ? "" : value) {
+            case "create" -> Events.FileChangeType.CREATE;
+            case "modify" -> Events.FileChangeType.MODIFY;
+            case "delete" -> Events.FileChangeType.DELETE;
+            default -> null;
+        };
+    }
+
+    private static Events.HookSessionType hookSessionType(String value) {
+        return switch (value == null ? "" : value) {
+            case "startup" -> Events.HookSessionType.STARTUP;
+            case "resume" -> Events.HookSessionType.RESUME;
+            case "clear" -> Events.HookSessionType.CLEAR;
+            default -> null;
+        };
+    }
+
+    private static Events.HookSessionEndReason hookSessionEndReason(String value) {
+        return switch (value == null ? "" : value) {
+            case "quit" -> Events.HookSessionEndReason.QUIT;
+            case "clear" -> Events.HookSessionEndReason.CLEAR;
+            case "exit" -> Events.HookSessionEndReason.EXIT;
+            case "error" -> Events.HookSessionEndReason.ERROR;
+            default -> null;
+        };
+    }
+
     private static Events.LearnProgressStatus learnProgressStatus(String value) {
         return switch (value == null ? "" : value) {
             case "analyzing" -> Events.LearnProgressStatus.ANALYZING;
@@ -761,7 +873,7 @@ public final class RPCClient {
                 && textual(params, "toolId")
                 && textual(params, "toolName")
                 && bool(params, "success")
-                && number(params, "duration")
+                && finiteNumber(params, "duration")
                 && optionalTextual(params, "output");
     }
 
@@ -774,11 +886,85 @@ public final class RPCClient {
     private static boolean validHookPostResponse(JsonNode params) {
         JsonNode status = params.get("tokensUsageStatus");
         return validTimestamp(params)
-                && integral(params, "tokensUsed")
-                && integral(params, "toolCallsCount")
-                && number(params, "duration")
+                && longIntegral(params, "tokensUsed")
+                && intIntegral(params, "toolCallsCount")
+                && finiteNumber(params, "duration")
                 && (status == null || status.isNull()
                         || status.isTextual() && tokenUsageStatus(status.textValue()) != null);
+    }
+
+    private static boolean validHookFileModified(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "filePath")
+                && textual(params, "changeType")
+                && fileChangeType(params.path("changeType").textValue()) != null
+                && textual(params, "toolId");
+    }
+
+    private static boolean validHookSessionError(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "error")
+                && optionalTextual(params, "code")
+                && optionalObject(params, "context");
+    }
+
+    private static boolean validHookSessionStart(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "sessionType")
+                && hookSessionType(params.path("sessionType").textValue()) != null;
+    }
+
+    private static boolean validHookSessionEnd(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "reason")
+                && hookSessionEndReason(params.path("reason").textValue()) != null
+                && finiteNumber(params, "duration");
+    }
+
+    private static boolean validHookSubagentStop(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "subagentId")
+                && textual(params, "subagentName")
+                && textual(params, "subagentType")
+                && bool(params, "success")
+                && finiteNumber(params, "duration")
+                && optionalTextual(params, "error");
+    }
+
+    private static boolean validHookPermissionRequest(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "tool")
+                && optionalTextual(params, "path")
+                && optionalTextual(params, "command")
+                && optionalObject(params, "args");
+    }
+
+    private static boolean validHookNotification(JsonNode params) {
+        return validTimestamp(params)
+                && textual(params, "notificationType")
+                && textual(params, "message");
+    }
+
+    private static boolean validHookContextCompacted(JsonNode params) {
+        return validTimestamp(params)
+                && nonNegativeIntegral(params, "croppedCount")
+                && optionalTextual(params, "summary")
+                && nonNegativeFiniteNumber(params, "usagePercent")
+                && textual(params, "reason");
+    }
+
+    private static boolean validHookContextOverflow(JsonNode params) {
+        return validTimestamp(params)
+                && nonNegativeIntegral(params, "tokensBefore")
+                && nonNegativeIntegral(params, "tokensAfter")
+                && nonNegativeIntegral(params, "croppedCount")
+                && nonNegativeFiniteNumber(params, "usagePercent");
+    }
+
+    private static boolean validHookContextUsage(JsonNode params) {
+        return validTimestamp(params)
+                && nonNegativeFiniteNumber(params, "usagePercent")
+                && nonNegativeIntegral(params, "remainingTokens");
     }
 
     private static boolean validMcpInvocationRequest(JsonNode params) {
@@ -819,8 +1005,29 @@ public final class RPCClient {
         return params.path(field).isIntegralNumber();
     }
 
+    private static boolean longIntegral(JsonNode params, String field) {
+        return integral(params, field) && params.path(field).canConvertToLong();
+    }
+
+    private static boolean intIntegral(JsonNode params, String field) {
+        return integral(params, field) && params.path(field).canConvertToInt();
+    }
+
+    private static boolean nonNegativeIntegral(JsonNode params, String field) {
+        return longIntegral(params, field)
+                && params.path(field).asLong() >= 0;
+    }
+
     private static boolean number(JsonNode params, String field) {
         return params.path(field).isNumber();
+    }
+
+    private static boolean finiteNumber(JsonNode params, String field) {
+        return number(params, field) && Double.isFinite(params.path(field).asDouble());
+    }
+
+    private static boolean nonNegativeFiniteNumber(JsonNode params, String field) {
+        return finiteNumber(params, field) && params.path(field).asDouble() >= 0;
     }
 
     private static boolean bool(JsonNode params, String field) {
@@ -835,6 +1042,11 @@ public final class RPCClient {
     private static boolean optionalTextual(JsonNode params, String field) {
         JsonNode value = params.get(field);
         return value == null || value.isNull() || value.isTextual();
+    }
+
+    private static boolean optionalObject(JsonNode params, String field) {
+        JsonNode value = params.get(field);
+        return value == null || value.isNull() || value.isObject();
     }
 
     private static boolean stringArray(JsonNode params, String field) {

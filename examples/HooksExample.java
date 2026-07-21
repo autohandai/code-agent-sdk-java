@@ -49,6 +49,12 @@ public class HooksExample {
                 switch (event) {
                     case Events.MessageUpdateEvent e -> System.out.print(e.delta());
                     case Events.ToolEndEvent e -> System.out.println("\n[Hook would fire after: " + e.toolName() + "]");
+                    case Events.HookPostToolEvent e -> System.out.println(
+                        "\n[post-tool hook: " + e.toolName() + ", success=" + e.success() + "]");
+                    case Events.HookContextWarningEvent e -> System.out.println(
+                        "\n[context warning: usage=" + e.usagePercent() + "]");
+                    case Events.UnknownEvent e when e.method().startsWith("autohand.hook.") ->
+                        System.err.println("\n[unrecognized hook payload: " + e.params() + "]");
                     default -> {}
                 }
             });
