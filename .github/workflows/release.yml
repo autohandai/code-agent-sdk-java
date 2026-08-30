@@ -64,7 +64,7 @@ jobs:
           echo "wait_until=$wait_until" >> "$GITHUB_OUTPUT"
 
       - name: Set up JDK 21 and Maven Central credentials
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
