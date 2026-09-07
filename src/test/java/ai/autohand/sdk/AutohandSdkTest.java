@@ -530,6 +530,7 @@ class AutohandSdkTest {
                 .build();
 
         assertEquals("secret-test-key", config.environment().get("AUTOHAND_AI_API_KEY"));
+        assertEquals("autohandai", config.environment().get("AUTOHAND_PROVIDER"));
         assertEquals("https://api.example.test", config.environment().get("AUTOHAND_AI_BASE_URL"));
         assertEquals("local", config.environment().get("AUTOHAND_AI_PLAN"));
     }

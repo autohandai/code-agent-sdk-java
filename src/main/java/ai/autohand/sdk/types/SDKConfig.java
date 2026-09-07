@@ -131,6 +131,9 @@ public final class SDKConfig {
                 processEnvironment.putIfAbsent("AUTOHAND_AI_BASE_URL", baseUrl);
             }
         }
+        if (provider != null) {
+            processEnvironment.put("AUTOHAND_PROVIDER", provider);
+        }
         this.environment = Map.copyOf(processEnvironment);
         this.options = Arrays.copyOf(builder.options, builder.options.length);
     }
