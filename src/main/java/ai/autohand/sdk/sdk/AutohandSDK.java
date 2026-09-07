@@ -176,6 +176,12 @@ public final class AutohandSDK implements AutoCloseable {
         return values.stream().map(command -> command.startsWith("/") ? command : "/" + command).toList();
     }
 
+    /** Return effective subagents, including inline and enabled extension agents. */
+    public List<AgentInfo> supportedAgents() {
+        ensureStarted();
+        return client.request("autohand.getSupportedAgents", Map.of(), AgentInfo.Result.class).agents();
+    }
+
     public boolean supportsCommand(String command) {
         String normalized = command.startsWith("/") ? command : "/" + command;
         return supportedCommands().contains(normalized);

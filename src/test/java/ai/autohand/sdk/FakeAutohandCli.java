@@ -30,6 +30,18 @@ public final class FakeAutohandCli {
                 JsonNode id = request.get("id");
 
                 switch (method) {
+                    case "autohand.getSupportedAgents" -> {
+                        if (!request.path("params").isEmpty()) {
+                            respondError(id, -32602, "Expected empty agent discovery parameters");
+                            continue;
+                        }
+                        String result = System.getenv("AUTOHAND_TEST_AGENTS");
+                        respond(id, result == null ? Map.of("agents", List.of(Map.of(
+                                "id", "reviewer", "name", "reviewer", "description", "Review changes",
+                                "tools", List.of("read_file"), "model", "fantail", "source", "extension",
+                                "extensionId", "example.review", "extensionVersion", "1.0.0", "extensionScope", "project")))
+                                : MAPPER.readTree(result));
+                    }
                     case "autohand.prompt" -> {
                         String requestedMessage = request.path("params").path("message").asText();
                         if (requestedMessage.equals("control-concurrency")) {
