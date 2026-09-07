@@ -49,6 +49,10 @@ mvn clean install
 
 ## Quick Start
 
+For Autohand AI provider configuration, asynchronous stop conditions, persisted
+tool-step results and cancellation, see [Step control](docs/step-control.md)
+and [the runnable example](examples/StopWhen.java).
+
 ### High-Level API (Recommended)
 
 Use `Agent` for application code. It gives you an explicit run lifecycle while keeping CLI subprocess and JSON-RPC details out of your app.

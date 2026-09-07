@@ -1,22 +1,27 @@
 package ai.autohand.sdk.sdk;
 
 import ai.autohand.sdk.types.Event;
+import ai.autohand.sdk.types.AgentStep;
 import ai.autohand.sdk.types.Events;
 import ai.autohand.sdk.types.PromptParams;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public final class Run {
     private final String id = "run-" + UUID.randomUUID();
     private final AutohandSDK sdk;
-    private final String prompt;
+    private final PromptParams prompt;
     private final List<Event> events = new ArrayList<>();
+    private final List<AgentStep> steps = new ArrayList<>();
     private final StringBuilder text = new StringBuilder();
     private State state = State.NEW;
     private RuntimeException failure;
+    private String status = "completed";
+    private final AtomicBoolean cancellation = new AtomicBoolean();
 
     private enum State {
         NEW,
@@ -26,6 +31,10 @@ public final class Run {
     }
 
     Run(AutohandSDK sdk, String prompt) {
+        this(sdk, new PromptParams(prompt));
+    }
+
+    Run(AutohandSDK sdk, PromptParams prompt) {
         this.sdk = sdk;
         this.prompt = prompt;
     }
@@ -46,10 +55,10 @@ public final class Run {
         }
 
         try {
-            sdk.streamPrompt(new PromptParams(prompt), event -> {
+            sdk.streamPrompt(prompt, event -> {
                 record(event);
                 onEvent.accept(event);
-            });
+            }, cancellation);
             synchronized (this) {
                 state = State.COMPLETED;
                 notifyAll();
@@ -85,7 +94,7 @@ public final class Run {
             if (state == State.FAILED) {
                 throw failure;
             }
-            return new RunResult(id, "completed", text.toString(), List.copyOf(events));
+            return new RunResult(id, status, text.toString(), events, steps);
         }
     }
 
@@ -98,11 +107,27 @@ public final class Run {
     }
 
     String prompt() {
-        return prompt;
+        return prompt.message();
+    }
+
+    /** Abort this active run, or cancel it before it starts. */
+    public synchronized void abort() {
+        if (state == State.NEW) {
+            cancellation.set(true);
+            status = "aborted";
+            state = State.COMPLETED;
+            notifyAll();
+        } else if (state == State.RUNNING) {
+            status = "aborted";
+            sdk.abort(cancellation);
+        }
     }
 
     private synchronized void record(Event event) {
         events.add(event);
+        if (event instanceof Events.StepEndEvent step) steps.add(step.step());
+        if (event instanceof Events.TurnEndEvent end) status = end.status();
+        if (event instanceof Events.AgentEndEvent end) status = end.reason();
         if (event instanceof Events.MessageUpdateEvent update && update.delta() != null) {
             text.append(update.delta());
         } else if (event instanceof Events.MessageEndEvent end && end.content() != null && text.isEmpty()) {

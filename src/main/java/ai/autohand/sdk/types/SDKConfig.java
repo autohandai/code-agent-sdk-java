@@ -296,6 +296,10 @@ public final class SDKConfig {
         return model;
     }
 
+    public Boolean unrestricted() {
+        return unrestricted;
+    }
+
     public String systemPrompt() {
         return systemPrompt;
     }

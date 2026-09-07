@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public final class AutohandSDK implements AutoCloseable {
@@ -86,13 +87,27 @@ public final class AutohandSDK implements AutoCloseable {
 
     public PromptResult prompt(PromptParams params) {
         ensureStarted();
-        JsonNode result = client.request("autohand.prompt", params);
+        JsonNode result = client.prompt(params);
         return result.isMissingNode() || result.isEmpty() ? new PromptResult(true) : RPCClient.convert(result, PromptResult.class);
     }
 
     public void streamPrompt(PromptParams params, Consumer<Event> onEvent) {
         ensureStarted();
         client.prompt(params, onEvent);
+    }
+
+    void streamPrompt(PromptParams params, Consumer<Event> onEvent, AtomicBoolean cancellation) {
+        ensureStarted();
+        client.prompt(params, onEvent, cancellation);
+    }
+
+    void abort(AtomicBoolean cancellation) {
+        client.abortPrompt(cancellation);
+    }
+
+    /** Abort the active turn, including any unresolved host stop condition. */
+    public void abort() {
+        if (isRunning()) client.abort(Map.of());
     }
 
     public void setPermissionMode(PermissionMode mode) {

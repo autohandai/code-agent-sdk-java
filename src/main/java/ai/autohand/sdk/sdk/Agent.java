@@ -4,6 +4,7 @@ import ai.autohand.sdk.types.DecisionScope;
 import ai.autohand.sdk.types.PermissionDecision;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.SDKConfig;
+import ai.autohand.sdk.types.PromptParams;
 import ai.autohand.sdk.types.Autoresearch;
 import ai.autohand.sdk.types.AutoMode;
 import ai.autohand.sdk.types.BrowserHandoff;
@@ -47,7 +48,24 @@ public final class Agent implements AutoCloseable {
         return new Agent(options);
     }
 
+    private Agent(SDKConfig config) throws IOException {
+        this.options = new AgentOptions(config.cwd(), config.cliPath(), config.appendSystemPrompt(),
+                Boolean.TRUE.equals(config.unrestricted()) ? PermissionMode.UNRESTRICTED : PermissionMode.INTERACTIVE,
+                config.model(), config.skills(), false, config.systemPrompt());
+        this.sdk = new AutohandSDK(config);
+        this.sdk.start();
+    }
+
+    /** Create an agent with the full provider, environment and runtime configuration. */
+    public static Agent create(SDKConfig config) throws IOException {
+        return new Agent(config);
+    }
+
     public Run send(String prompt) {
+        return new Run(sdk, prompt);
+    }
+
+    public Run send(PromptParams prompt) {
         return new Run(sdk, prompt);
     }
 
@@ -220,6 +238,10 @@ public final class Agent implements AutoCloseable {
     public RunResult run(String prompt) {
         Run run = send(prompt);
         return run.waitForResult();
+    }
+
+    public RunResult run(PromptParams prompt) {
+        return send(prompt).waitForResult();
     }
 
     public <T> T runJson(String prompt, Class<T> type) throws StructuredOutputError {

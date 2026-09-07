@@ -858,6 +858,8 @@ public final class FakeAutohandCli {
                         "messageId", "msg-control",
                         "content", "control-ready",
                         "timestamp", Instant.now().toString()));
+                notify("autohand.turnEnd", Map.of(
+                        "turnId", "turn-control", "reason", "completed", "timestamp", Instant.now().toString()));
                 respond(id, Map.of("success", true));
             } catch (Exception exception) {
                 throw new RuntimeException(exception);

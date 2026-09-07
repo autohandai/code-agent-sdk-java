@@ -27,7 +27,7 @@ class ExampleCompileTest {
                     .toList();
         }
 
-        assertEquals(30, examples.size(), "Keep the published Java example inventory intentional.");
+        assertEquals(31, examples.size(), "Keep the published Java example inventory intentional.");
 
         var compiler = ToolProvider.getSystemJavaCompiler();
         assertNotNull(compiler, "Run tests with a JDK, not a JRE.");

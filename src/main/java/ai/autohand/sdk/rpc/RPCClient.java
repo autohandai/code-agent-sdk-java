@@ -6,6 +6,7 @@ import ai.autohand.sdk.sdk.TransportException;
 import ai.autohand.sdk.transport.Transport;
 import ai.autohand.sdk.types.Event;
 import ai.autohand.sdk.types.Events;
+import ai.autohand.sdk.types.AgentStep;
 import ai.autohand.sdk.types.Autoresearch;
 import ai.autohand.sdk.types.AutoMode;
 import ai.autohand.sdk.types.BrowserHandoff;
@@ -31,6 +32,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -48,13 +50,14 @@ public final class RPCClient {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
-    private static final Executor EVENT_EXECUTOR = command ->
+    static final Executor EVENT_EXECUTOR = command ->
             Thread.ofVirtual().name("autohand-rpc-event").start(command);
 
     private final Transport transport;
     private final AtomicLong nextId = new AtomicLong();
     private final Map<String, CompletableFuture<JsonNode>> pendingRequests = new ConcurrentHashMap<>();
     private final AtomicReference<EventContext> activeEventContext = new AtomicReference<>();
+    private final AtomicReference<PromptTurn> activePrompt = new AtomicReference<>();
     private final AtomicBoolean readerStarted = new AtomicBoolean();
     private final ReentrantLock promptLock = new ReentrantLock(true);
     private volatile RuntimeException readerFailure;
@@ -91,6 +94,11 @@ public final class RPCClient {
     }
 
     private JsonNode requestInternal(String method, Object params) {
+        return requestInternal(method, params, transport.config().timeoutMs(), null, null);
+    }
+
+    private JsonNode requestInternal(String method, Object params, long timeoutMs,
+                                     PromptTurn decisionGuard, CompletableFuture<?> failureSignal) {
         if (!transport.isRunning()) {
             throw new TransportException("Autohand CLI process is not running. Call start() before sending RPC requests.");
         }
@@ -116,14 +124,20 @@ public final class RPCClient {
             request.set("params", params == null ? MAPPER.createObjectNode() : MAPPER.valueToTree(params));
 
             try {
-                transport.writeLine(MAPPER.writeValueAsString(request));
+                String line = MAPPER.writeValueAsString(request);
+                if (decisionGuard == null) transport.writeLine(line);
+                else synchronized (decisionGuard) {
+                    if (activePrompt.get() != decisionGuard
+                            || (!method.equals("autohand.abort") && !decisionGuard.active())) return null;
+                    transport.writeLine(line);
+                }
             } catch (JsonProcessingException exception) {
                 throw new TransportException("Failed to serialize JSON-RPC request: " + method, exception);
             }
 
-            long timeoutMs = transport.config().timeoutMs();
             try {
-                return responseResult(method, response.get(timeoutMs, TimeUnit.MILLISECONDS));
+                var completion = failureSignal == null ? response : CompletableFuture.anyOf(response, failureSignal);
+                return responseResult(method, (JsonNode) completion.get(timeoutMs, TimeUnit.MILLISECONDS));
             } catch (TimeoutException exception) {
                 throw new RequestTimeoutException(method, timeoutMs);
             } catch (InterruptedException exception) {
@@ -146,12 +160,70 @@ public final class RPCClient {
         return convert(request(method, params), type);
     }
 
+    public JsonNode prompt(PromptParams params) {
+        return prompt(params, null, new AtomicBoolean());
+    }
+
     public void prompt(PromptParams params, Consumer<Event> onEvent) {
-        request("autohand.prompt", params, onEvent);
+        prompt(params, onEvent, new AtomicBoolean());
+    }
+
+    public JsonNode prompt(PromptParams params, Consumer<Event> onEvent, AtomicBoolean cancellation) {
+        Objects.requireNonNull(params, "prompt params");
+        Objects.requireNonNull(cancellation, "prompt cancellation");
+        promptLock.lock();
+        var turn = new PromptTurn(this, onEvent == null ? event -> { } : onEvent, params.stopWhen(), cancellation);
+        try {
+            activePrompt.set(turn);
+            ObjectNode wire = MAPPER.createObjectNode().put("message", params.message());
+            if (!params.stopWhen().isEmpty()) wire.putObject("stopWhen").put("mode", "host");
+            JsonNode result = requestInternal("autohand.prompt", wire, transport.config().timeoutMs(), turn, turn.failure);
+            if (result == null) return MAPPER.createObjectNode().put("success", true);
+            turn.await(transport.config().timeoutMs());
+            return result;
+        } catch (RuntimeException failure) {
+            turn.cancelDecisions();
+            if (!turn.terminal.isDone()) {
+                try {
+                    requestInternal("autohand.abort", Map.of(), 2_000, null, null);
+                    PromptTurn.awaitFuture(turn.terminal, 2_000);
+                } catch (RuntimeException cleanupFailure) {
+                    transport.close();
+                    failure.addSuppressed(cleanupFailure);
+                }
+            }
+            throw failure;
+        } finally {
+            synchronized (turn) {
+                turn.cancelDecisions();
+                activePrompt.compareAndSet(turn, null);
+            }
+            promptLock.unlock();
+        }
+    }
+
+    void decideStep(PromptTurn turn, String stepId, boolean stop) {
+        JsonNode result = requestInternal("autohand.stepDecision", Map.of("stepId", stepId, "stop", stop),
+                transport.config().timeoutMs(), turn, null);
+        if (result != null && (!result.path("success").isBoolean() || !result.path("success").booleanValue())) {
+            throw new TransportException("Invalid or rejected autohand.stepDecision result");
+        }
     }
 
     public JsonNode abort(Map<String, Object> params) {
-        return request("autohand.abort", params == null ? Map.of() : params);
+        PromptTurn turn = activePrompt.get();
+        if (turn != null) turn.cancelDecisions();
+        return requestInternal("autohand.abort", params == null ? Map.of() : params,
+                transport.config().timeoutMs(), turn, null);
+    }
+
+    public void abortPrompt(AtomicBoolean cancellation) {
+        cancellation.set(true);
+        PromptTurn turn = activePrompt.get();
+        if (turn != null && turn.cancellation == cancellation) {
+            turn.cancelDecisions();
+            requestInternal("autohand.abort", Map.of(), transport.config().timeoutMs(), turn, null);
+        }
     }
 
     public JsonNode getState() {
@@ -496,6 +568,11 @@ public final class RPCClient {
                 }
 
                 if (message.has("method") && !message.has("id")) {
+                    PromptTurn turn = activePrompt.get();
+                    if (turn != null) {
+                        turn.dispatch(toEvent(message));
+                        continue;
+                    }
                     EventContext context = activeEventContext.get();
                     if (context != null) {
                         context.dispatch(toEvent(message));
@@ -512,6 +589,8 @@ public final class RPCClient {
             }
         } catch (RuntimeException failure) {
             readerFailure = failure;
+            PromptTurn turn = activePrompt.get();
+            if (turn != null) turn.fail(failure);
             pendingRequests.forEach((id, response) -> {
                 if (pendingRequests.remove(id, response)) {
                     response.completeExceptionally(failure);
@@ -545,6 +624,10 @@ public final class RPCClient {
         String timestamp = text(params, "timestamp", Instant.now().toString());
 
         return switch (method) {
+            case "autohand.stepEnd" -> !validStepEnd(params)
+                    ? new Events.UnknownEvent(method, params, timestamp)
+                    : new Events.StepEndEvent(params.path("stepId").textValue(),
+                    MAPPER.convertValue(params.get("step"), AgentStep.class), timestamp);
             case "autohand.agentStart" -> new Events.AgentStartEvent(
                     text(params, "sessionId", "session_id", null),
                     text(params, "model", null),
@@ -560,7 +643,8 @@ public final class RPCClient {
                     timestamp);
             case "autohand.turnEnd" -> new Events.TurnEndEvent(
                     text(params, "turnId", "turn_id", null),
-                    text(params, "status", "completed"),
+                    "stop_condition".equals(text(params, "reason", null)) ? "stopped"
+                            : text(params, "reason", "status", "completed"),
                     params.hasNonNull("tokensUsed") ? params.get("tokensUsed").asLong() : null,
                     text(params, "tokensUsageStatus", null),
                     params.hasNonNull("durationMs") ? params.get("durationMs").asLong() : null,
@@ -995,6 +1079,26 @@ public final class RPCClient {
 
     private static boolean validTimestamp(JsonNode params) {
         return params.isObject() && textual(params, "timestamp");
+    }
+
+    private static boolean validStepEnd(JsonNode params) {
+        JsonNode step = params.path("step");
+        if (!textual(params, "stepId") || !textual(params, "timestamp") || !step.isObject()
+                || !intIntegral(step, "stepNumber") || step.path("stepNumber").intValue() < 1
+                || !step.path("toolCalls").isArray() || !step.path("toolResults").isArray()
+                || !absentOrText(step, "thought")) return false;
+        for (JsonNode call : step.get("toolCalls")) {
+            if (!textual(call, "tool") || !call.path("args").isObject() || !absentOrText(call, "id")) return false;
+        }
+        for (JsonNode result : step.get("toolResults")) {
+            if (!textual(result, "tool") || !bool(result, "success") || !absentOrText(result, "output")
+                    || !absentOrText(result, "error")) return false;
+        }
+        return true;
+    }
+
+    private static boolean absentOrText(JsonNode params, String field) {
+        return !params.has(field) || textual(params, field);
     }
 
     private static boolean textual(JsonNode params, String field) {
