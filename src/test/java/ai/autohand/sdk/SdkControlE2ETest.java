@@ -32,10 +32,37 @@ import java.util.ArrayList;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class SdkControlE2ETest {
     @TempDir
     Path tempDir;
+
+    @Test
+    void discoversEffectiveAgentsThroughSpawnedCli() throws Exception {
+        try (AutohandSDK sdk = startedSdk()) {
+            var agents = sdk.supportedAgents();
+            assertEquals(1, agents.size());
+            var agent = agents.getFirst();
+            assertEquals("reviewer", agent.id());
+            assertEquals(List.of("read_file"), agent.tools());
+            assertEquals("fantail", agent.model());
+            assertEquals("extension", agent.source());
+            assertEquals("example.review", agent.extensionId());
+            assertEquals("1.0.0", agent.extensionVersion());
+            assertEquals("project", agent.extensionScope());
+        }
+    }
+
+    @Test
+    void rejectsMalformedAgentDiscovery() throws Exception {
+        for (String result : List.of("{}", "{\"agents\":null}", "{\"agents\":[{}]}",
+                "{\"agents\":[{\"id\":\"one\",\"name\":\"one\",\"description\":\"Agent\",\"tools\":[1]}]}")) {
+            try (AutohandSDK sdk = startedSdk(Map.of("AUTOHAND_TEST_AGENTS", result))) {
+                assertThrows(RuntimeException.class, sdk::supportedAgents);
+            }
+        }
+    }
 
     @Test
     void acknowledgesPermissionThroughSpawnedCli() throws Exception {
@@ -559,7 +586,12 @@ class SdkControlE2ETest {
     }
 
     private AutohandSDK startedSdk() throws Exception {
+        return startedSdk(Map.of());
+    }
+
+    private AutohandSDK startedSdk(Map<String, String> env) throws Exception {
         AutohandSDK sdk = new AutohandSDK(SDKConfig.builder()
+                .environment(env)
                 .cwd(tempDir.toString())
                 .cliPath(fakeCli().toString())
                 .timeoutMs(10_000)

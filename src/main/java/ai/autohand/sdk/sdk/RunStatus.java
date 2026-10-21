@@ -7,5 +7,7 @@ public enum RunStatus {
     /** The run completed normally. */
     COMPLETED,
     /** The run was aborted by the user. */
-    ABORTED
+    ABORTED,
+    /** Paused after a completed tool step; another prompt can continue. */
+    STOPPED
 }

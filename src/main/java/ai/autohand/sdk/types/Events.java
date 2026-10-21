@@ -67,6 +67,9 @@ public final class Events {
     public record MessageStartEvent(String messageId, String role, String timestamp) implements Event {
     }
 
+    /** A tool boundary at which the host may request a resumable stop. */
+    public record StepEndEvent(String stepId, AgentStep step, String timestamp) implements Event { }
+
     public record MessageUpdateEvent(String messageId, String delta, String timestamp) implements Event {
     }
 

@@ -1,5 +1,6 @@
 package ai.autohand.sdk.types;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -31,6 +32,7 @@ public final class SDKConfig {
     private final String yolo;
     private final Integer yoloTimeout;
     private final String sessionId;
+    private final Boolean ephemeral;
     private final Boolean persistSession;
     private final Boolean resume;
     private final Boolean continueSession;
@@ -59,6 +61,7 @@ public final class SDKConfig {
     private final String baseUrl;
     private final String autohandAIPlan;
     private final FeatureFlagSettings features;
+    private final JsonNode runSettings;
     private final Object[] options;
 
     /**
@@ -94,6 +97,7 @@ public final class SDKConfig {
         this.yolo = blankToNull(builder.yolo);
         this.yoloTimeout = builder.yoloTimeout;
         this.sessionId = blankToNull(builder.sessionId);
+        this.ephemeral = builder.ephemeral;
         this.persistSession = builder.persistSession;
         this.resume = builder.resume;
         this.continueSession = builder.continueSession;
@@ -122,8 +126,12 @@ public final class SDKConfig {
         this.baseUrl = blankToNull(builder.baseUrl);
         this.autohandAIPlan = blankToNull(builder.autohandAIPlan);
         this.features = builder.features;
+        this.runSettings = builder.runSettings == null ? null : builder.runSettings.deepCopy();
+        var overlay = RuntimeSettings.build(runSettings, features, provider, apiKey, baseUrl, model, autohandAIPlan);
+        if (features != null || runSettings != null || (provider != null && !provider.equals("autohandai") && (apiKey != null || baseUrl != null)))
+            processEnvironment.put("AUTOHAND_RUN_SETTINGS", overlay.toString());
         if ("autohandai".equalsIgnoreCase(provider)) {
-            processEnvironment.putIfAbsent("AUTOHAND_AI_PLAN", autohandAIPlan == null ? "cloud" : autohandAIPlan);
+            if (autohandAIPlan != null) processEnvironment.putIfAbsent("AUTOHAND_AI_PLAN", autohandAIPlan);
             if (apiKey != null) {
                 processEnvironment.putIfAbsent("AUTOHAND_AI_API_KEY", apiKey);
             }
@@ -167,6 +175,7 @@ public final class SDKConfig {
                 .yolo(yolo)
                 .yoloTimeout(yoloTimeout)
                 .sessionId(sessionId)
+                .ephemeral(ephemeral)
                 .persistSession(persistSession)
                 .resume(resume)
                 .continueSession(continueSession)
@@ -195,6 +204,7 @@ public final class SDKConfig {
                 .baseUrl(baseUrl)
                 .autohandAIPlan(autohandAIPlan)
                 .features(features)
+                .runSettings(runSettings)
                 .options(options);
     }
 
@@ -203,25 +213,26 @@ public final class SDKConfig {
         args.add("--mode");
         args.add("rpc");
 
+        addFlag(args, "--ephemeral", ephemeral);
         addFlag(args, "--bare", bare);
         addFlag(args, "--unrestricted", unrestricted);
         addFlag(args, "--auto-mode", autoMode);
         addFlag(args, "--auto-skill", autoSkill);
-        addFlag(args, "-c", autoCommit);
+        addFlag(args, "--auto-commit", autoCommit);
         if (Boolean.FALSE.equals(contextCompact)) {
             args.add("--no-context-compact");
         } else {
             addFlag(args, "--context-compact", contextCompact);
         }
-        addFlag(args, "--persist-session", persistSession);
-        addFlag(args, "--resume", resume);
-        addFlag(args, "--continue", continueSession);
         if (Boolean.FALSE.equals(idleLogout)) {
             args.add("--no-idle-logout");
         }
-        addOption(args, "--session-id", sessionId);
+        if (fork == null) {
+            String reference = sessionId != null ? sessionId : sessionPath;
+            if (reference != null) addOption(args, "--sdk-session-reference", reference);
+            else if (Boolean.TRUE.equals(resume) || Boolean.TRUE.equals(continueSession)) args.add("--sdk-resume-last");
+        }
         addOption(args, "--fork", fork);
-        addOption(args, "--session-path", sessionPath);
         addOption(args, "--auto-save-interval", autoSaveInterval);
         if (Boolean.FALSE.equals(agentsMdEnabled)) {
             args.add("--no-agents-md");
@@ -248,7 +259,7 @@ public final class SDKConfig {
         addOption(args, "--max-cost", maxCost);
         addOption(args, "--temperature", temperature);
         addOption(args, "--yolo", yolo);
-        addOption(args, "--yolo-timeout", yoloTimeout);
+        addOption(args, "--timeout", yoloTimeout);
 
         List<String> skillNames = skills.stream()
                 .map(SDKConfig::skillToken)
@@ -268,6 +279,8 @@ public final class SDKConfig {
             addOption(args, "--add-dir", dir);
         }
 
+        if (environment.containsKey("AUTOHAND_RUN_SETTINGS")) { args.add("--sdk-settings-version"); args.add("1"); }
+        CliCompatibility.validate(args);
         args.addAll(extraArgs);
         return args;
     }
@@ -294,6 +307,10 @@ public final class SDKConfig {
 
     public String model() {
         return model;
+    }
+
+    public Boolean unrestricted() {
+        return unrestricted;
     }
 
     public String systemPrompt() {
@@ -403,6 +420,7 @@ public final class SDKConfig {
         private String yolo;
         private Integer yoloTimeout;
         private String sessionId;
+        private Boolean ephemeral;
         private Boolean persistSession;
         private Boolean resume;
         private Boolean continueSession;
@@ -431,6 +449,10 @@ public final class SDKConfig {
         private String baseUrl;
         private String autohandAIPlan;
         private FeatureFlagSettings features;
+        private JsonNode runSettings;
+
+        /** Native CLI provider, feature and session-awareness settings for this run only. */
+        public Builder runSettings(JsonNode value) { this.runSettings = value; return this; }
         private Object[] options = new Object[0];
 
         public Builder cwd(String cwd) {
@@ -588,6 +610,10 @@ public final class SDKConfig {
             return this;
         }
 
+        /** Keep this run out of session history and synchronization. */
+        public Builder ephemeral(Boolean value) {this.ephemeral=value; return this;}
+
+        /** Legacy compatibility field; use ephemeral(true) to disable persistence. */
         public Builder persistSession(Boolean persistSession) {
             this.persistSession = persistSession;
             return this;

@@ -49,6 +49,10 @@ mvn clean install
 
 ## Quick Start
 
+For Autohand AI provider configuration, asynchronous stop conditions, persisted
+tool-step results and cancellation, see [Step control](docs/step-control.md)
+and [the runnable example](examples/StopWhen.java).
+
 ### High-Level API (Recommended)
 
 Use `Agent` for application code. It gives you an explicit run lifecycle while keeping CLI subprocess and JSON-RPC details out of your app.
@@ -261,3 +265,5 @@ mvn -P release verify
 ## License
 
 [Apache License 2.0](./LICENSE)
+
+See [CLI compatibility and migration notes](docs/cli-compatibility.md) for this unreleased source revision, including provider startup settings, complete notifications and ephemeral sessions.

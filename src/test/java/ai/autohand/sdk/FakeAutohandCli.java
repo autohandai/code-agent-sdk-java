@@ -30,6 +30,18 @@ public final class FakeAutohandCli {
                 JsonNode id = request.get("id");
 
                 switch (method) {
+                    case "autohand.getSupportedAgents" -> {
+                        if (!request.path("params").isEmpty()) {
+                            respondError(id, -32602, "Expected empty agent discovery parameters");
+                            continue;
+                        }
+                        String result = System.getenv("AUTOHAND_TEST_AGENTS");
+                        respond(id, result == null ? Map.of("agents", List.of(Map.of(
+                                "id", "reviewer", "name", "reviewer", "description", "Review changes",
+                                "tools", List.of("read_file"), "model", "fantail", "source", "extension",
+                                "extensionId", "example.review", "extensionVersion", "1.0.0", "extensionScope", "project")))
+                                : MAPPER.readTree(result));
+                    }
                     case "autohand.prompt" -> {
                         String requestedMessage = request.path("params").path("message").asText();
                         if (requestedMessage.equals("control-concurrency")) {
@@ -525,6 +537,10 @@ public final class FakeAutohandCli {
                             "organization", "Autohand",
                             "subscriptionType", "developer"));
                     case "autohand.getState" -> {
+                        if ("1".equals(System.getenv("AUTOHAND_TEST_FAIL_STARTUP"))) {
+                            respondError(id, -32000, "Startup readiness failed");
+                            break;
+                        }
                         CONTROL_RPC_RECEIVED.countDown();
                         respond(id, Map.of(
                                 "status", "running",
@@ -846,6 +862,8 @@ public final class FakeAutohandCli {
                         "messageId", "msg-control",
                         "content", "control-ready",
                         "timestamp", Instant.now().toString()));
+                notify("autohand.turnEnd", Map.of(
+                        "turnId", "turn-control", "reason", "completed", "timestamp", Instant.now().toString()));
                 respond(id, Map.of("success", true));
             } catch (Exception exception) {
                 throw new RuntimeException(exception);

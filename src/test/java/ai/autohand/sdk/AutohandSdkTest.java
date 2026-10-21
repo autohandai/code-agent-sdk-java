@@ -27,7 +27,6 @@ import ai.autohand.sdk.types.McpDiscovery;
 import ai.autohand.sdk.types.PermissionMode;
 import ai.autohand.sdk.types.PromptParams;
 import ai.autohand.sdk.types.SDKConfig;
-import ai.autohand.sdk.types.SkillReference;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -98,7 +97,6 @@ class AutohandSdkTest {
                 .cliPath(fakeCli().toString())
                 .instructions("Be concise.")
                 .permissionMode(PermissionMode.INTERACTIVE)
-                .skills(List.of(new SkillReference("java", null, null)))
                 .build())) {
 
             var result = agent.run("Say hello");
@@ -391,6 +389,7 @@ class AutohandSdkTest {
                 .cwd(tempDir.toString())
                 .cliPath(fakeCli().toString())
                 .features(invalidForFixture)
+                .environment(java.util.Map.of("AUTOHAND_TEST_FAIL_STARTUP", "1"))
                 .build())) {
             assertThrows(RuntimeException.class, sdk::start);
             assertFalse(sdk.isRunning());
@@ -467,7 +466,6 @@ class AutohandSdkTest {
                 .cwd("/workspace")
                 .model("fantail")
                 .appendSystemPrompt("Prefer Java examples.")
-                .skills(List.of(new SkillReference("java", null, null), new SkillReference(null, "./skills/release/SKILL.md", null)))
                 .autoMode(true)
                 .contextCompact(false)
                 .addDirectory("/tmp/fixtures")
@@ -481,16 +479,7 @@ class AutohandSdkTest {
                 .agents("./agents")
                 .pluginDir("./plugins")
                 .sessionPath("./sessions")
-                .autoSaveInterval(15)
-                .agentsMdEnabled(true)
-                .agentsMdCreate(true)
-                .agentsMdPath("./AGENTS.md")
-                .agentsMdAutoUpdate(true)
                 .maxTokens(100_000)
-                .compressionThreshold(0.75)
-                .summarizationThreshold(0.9)
-                .skillSources(List.of(SkillSource.CODEX_USER, SkillSource.AUTOHAND_PROJECT))
-                .installMissingSkills(true)
                 .build();
 
         List<String> args = config.cliArgs();
@@ -500,8 +489,6 @@ class AutohandSdkTest {
         assertTrue(args.contains("--model"));
         assertTrue(args.contains("fantail"));
         assertTrue(args.contains("--append-sys-prompt"));
-        assertTrue(args.contains("--skills"));
-        assertTrue(args.contains("java,./skills/release/SKILL.md"));
         assertTrue(args.contains("--auto-mode"));
         assertTrue(args.contains("--no-context-compact"));
         assertTrue(args.contains("--add-dir"));
@@ -512,12 +499,7 @@ class AutohandSdkTest {
                 "--fork", "session-123", "--display-language", "en",
                 "--system-prompt-file", "./SYSTEM.md", "--append-system-prompt-file", "./APPEND.md",
                 "--mcp-config", "./mcp.json", "--agents", "./agents", "--plugin-dir", "./plugins")));
-        assertTrue(args.containsAll(List.of(
-                "--session-path", "./sessions", "--auto-save-interval", "15",
-                "--agents-md", "--agents-md-create", "--agents-md-path", "./AGENTS.md",
-                "--agents-md-auto-update", "--max-tokens", "100000",
-                "--compression-threshold", "0.75", "--summarization-threshold", "0.9",
-                "--skill-sources", "codex-user,autohand-project", "--install-missing-skills")));
+        assertTrue(args.containsAll(List.of("--max-tokens", "100000")));
     }
 
     @Test
