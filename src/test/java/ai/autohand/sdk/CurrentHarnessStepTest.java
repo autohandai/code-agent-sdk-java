@@ -31,13 +31,16 @@ class CurrentHarnessStepTest {
         String cli = System.getenv("AUTOHAND_TEST_CLI_PATH");
         assumeTrue(cli != null && !cli.isBlank(), "Set AUTOHAND_TEST_CLI_PATH to test the actual CLI");
         List<JsonNode> requests = new CopyOnWriteArrayList<>();
+        List<String> authRequests = new CopyOnWriteArrayList<>();
         var serverFailure = new AtomicReference<Throwable>();
         var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
             try {
                 Object response;
                 if (exchange.getRequestURI().getPath().equals("/auth/me")) {
-                    assertEquals("Bearer session-token", exchange.getRequestHeaders().getFirst("Authorization"));
+                    String token = exchange.getRequestHeaders().getFirst("Authorization");
+                    authRequests.add(token);
+                    assertTrue(List.of("Bearer session-token", "Bearer inference-key").contains(token));
                     response = Map.of("user", Map.of("id", "java-sdk", "email", "sdk@example.test"));
                 } else {
                     assertEquals("/v1/chat/completions", exchange.getRequestURI().getPath());
@@ -105,6 +108,7 @@ class CurrentHarnessStepTest {
                 assertEquals(saved.path("openai"), persisted.path("openai"));
                 assertFalse(persisted.has("autohandai"));
             }
+            assertEquals("Bearer session-token", authRequests.getFirst());
             assertNull(serverFailure.get());
         } finally {
             server.stop(0);

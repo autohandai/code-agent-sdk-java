@@ -265,3 +265,5 @@ mvn -P release verify
 ## License
 
 [Apache License 2.0](./LICENSE)
+
+See [CLI compatibility and migration notes](docs/cli-compatibility.md) for this unreleased source revision, including provider startup settings, complete notifications and ephemeral sessions.

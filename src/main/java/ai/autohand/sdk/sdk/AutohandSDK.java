@@ -15,12 +15,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.concurrent.CopyOnWriteArrayList;
+import ai.autohand.sdk.types.JsonRpcNotification;
 
 public final class AutohandSDK implements AutoCloseable {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
+    private final CopyOnWriteArrayList<Consumer<JsonRpcNotification>> notificationObservers = new CopyOnWriteArrayList<>();
     private final SDKConfig baseConfig;
     private Transport transport;
     private RPCClient client;
@@ -31,6 +34,25 @@ public final class AutohandSDK implements AutoCloseable {
     private List<SkillReference> skills;
     private PermissionMode pendingPermissionMode;
     private Boolean pendingPlanMode;
+
+    /** Observe complete packets in order. Callbacks must not block the protocol reader. */
+    public Runnable onNotification(Consumer<JsonRpcNotification> callback) {
+        java.util.Objects.requireNonNull(callback, "callback");
+        Consumer<JsonRpcNotification> registration = callback::accept;
+        notificationObservers.add(registration);
+        return () -> notificationObservers.remove(registration);
+    }
+
+    private void notifyObservers(JsonRpcNotification packet) {
+        for (var observer : notificationObservers) {
+            try {
+                observer.accept(new JsonRpcNotification(packet.jsonrpc(), packet.method(),
+                        packet.params() == null ? null : packet.params().deepCopy()));
+            } catch (RuntimeException ignored) {
+                // Observer errors must not disrupt typed events or pending RPC responses.
+            }
+        }
+    }
 
     public AutohandSDK() {
         this(new SDKConfig(".", null, false, 300_000));
@@ -54,9 +76,7 @@ public final class AutohandSDK implements AutoCloseable {
         try {
             transport.start();
             if (baseConfig.features() != null) {
-                Map<String, Object> features = MAPPER.convertValue(baseConfig.features(),
-                        MAPPER.getTypeFactory().constructMapType(Map.class, String.class, Object.class));
-                client.applyFlagSettings(Map.of("features", features));
+                client.getState();
             }
             if (pendingPermissionMode != null) {
                 client.setPermissionMode(pendingPermissionMode);
@@ -300,6 +320,12 @@ public final class AutohandSDK implements AutoCloseable {
     public Conversation.ResetResult reset() {
         ensureStarted();
         return client.reset();
+    }
+
+    /** Negotiate browser extension tools before issuing browser tasks. */
+    public com.fasterxml.jackson.databind.JsonNode setBrowserCapabilities(int protocolVersion, String extensionVersion, java.util.List<String> tools) {
+        ensureStarted();
+        return client.setBrowserCapabilities(protocolVersion, extensionVersion, tools);
     }
 
     public BrowserHandoff.CreateResult createBrowserHandoff() {
@@ -649,6 +675,7 @@ public final class AutohandSDK implements AutoCloseable {
                 effective.cliArgs(),
                 effective.environment()));
         this.client = new RPCClient(transport);
+        this.client.onNotification(this::notifyObservers);
     }
 
     private static PermissionDecision allowDecision(DecisionScope scope) {

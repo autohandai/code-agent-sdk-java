@@ -537,6 +537,10 @@ public final class FakeAutohandCli {
                             "organization", "Autohand",
                             "subscriptionType", "developer"));
                     case "autohand.getState" -> {
+                        if ("1".equals(System.getenv("AUTOHAND_TEST_FAIL_STARTUP"))) {
+                            respondError(id, -32000, "Startup readiness failed");
+                            break;
+                        }
                         CONTROL_RPC_RECEIVED.countDown();
                         respond(id, Map.of(
                                 "status", "running",

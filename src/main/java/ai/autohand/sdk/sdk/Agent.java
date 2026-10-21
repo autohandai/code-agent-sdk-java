@@ -14,6 +14,8 @@ import ai.autohand.sdk.types.Goals;
 import ai.autohand.sdk.types.McpDiscovery;
 
 import java.io.IOException;
+import java.util.function.Consumer;
+import ai.autohand.sdk.types.JsonRpcNotification;
 import java.util.Map;
 
 public final class Agent implements AutoCloseable {
@@ -59,6 +61,11 @@ public final class Agent implements AutoCloseable {
     /** Create an agent with the full provider, environment and runtime configuration. */
     public static Agent create(SDKConfig config) throws IOException {
         return new Agent(config);
+    }
+
+    /** Observe complete CLI packets alongside typed run events. */
+    public Runnable onNotification(Consumer<JsonRpcNotification> callback) {
+        return sdk.onNotification(callback);
     }
 
     public Run send(String prompt) {
@@ -161,6 +168,11 @@ public final class Agent implements AutoCloseable {
 
     public Conversation.ResetResult reset() {
         return sdk.reset();
+    }
+
+    /** Negotiate browser extension tools before issuing browser tasks. */
+    public com.fasterxml.jackson.databind.JsonNode setBrowserCapabilities(int protocolVersion, String extensionVersion, java.util.List<String> tools) {
+        return sdk.setBrowserCapabilities(protocolVersion, extensionVersion, tools);
     }
 
     public BrowserHandoff.CreateResult createBrowserHandoff() {

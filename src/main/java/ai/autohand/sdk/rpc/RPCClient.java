@@ -44,6 +44,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.concurrent.CopyOnWriteArrayList;
+import ai.autohand.sdk.types.JsonRpcNotification;
 
 /** JSON-RPC client for the Autohand CLI subprocess. */
 public final class RPCClient {
@@ -53,6 +55,7 @@ public final class RPCClient {
     static final Executor EVENT_EXECUTOR = command ->
             Thread.ofVirtual().name("autohand-rpc-event").start(command);
 
+    private final CopyOnWriteArrayList<Consumer<JsonRpcNotification>> notificationObservers = new CopyOnWriteArrayList<>();
     private final Transport transport;
     private final AtomicLong nextId = new AtomicLong();
     private final Map<String, CompletableFuture<JsonNode>> pendingRequests = new ConcurrentHashMap<>();
@@ -61,6 +64,25 @@ public final class RPCClient {
     private final AtomicBoolean readerStarted = new AtomicBoolean();
     private final ReentrantLock promptLock = new ReentrantLock(true);
     private volatile RuntimeException readerFailure;
+
+    /** Observe complete packets in order. Callbacks must not block the protocol reader. */
+    public Runnable onNotification(Consumer<JsonRpcNotification> callback) {
+        java.util.Objects.requireNonNull(callback, "callback");
+        Consumer<JsonRpcNotification> registration = callback::accept;
+        notificationObservers.add(registration);
+        return () -> notificationObservers.remove(registration);
+    }
+
+    private void notifyObservers(JsonRpcNotification packet) {
+        for (var observer : notificationObservers) {
+            try {
+                observer.accept(new JsonRpcNotification(packet.jsonrpc(), packet.method(),
+                        packet.params() == null ? null : packet.params().deepCopy()));
+            } catch (RuntimeException ignored) {
+                // Observer errors must not disrupt typed events or pending RPC responses.
+            }
+        }
+    }
 
     public RPCClient(Transport transport) {
         this.transport = transport;
@@ -236,6 +258,11 @@ public final class RPCClient {
 
     public Conversation.ResetResult reset() {
         return request("autohand.reset", Map.of(), Conversation.ResetResult.class);
+    }
+
+    /** Negotiate browser extension tools before issuing browser tasks. */
+    public com.fasterxml.jackson.databind.JsonNode setBrowserCapabilities(int protocolVersion, String extensionVersion, java.util.List<String> tools) {
+        return request("autohand.browserCapabilities.set", Map.of("protocolVersion", protocolVersion, "extensionVersion", extensionVersion, "tools", tools));
     }
 
     public BrowserHandoff.CreateResult createBrowserHandoff(BrowserHandoff.CreateParams params) {
@@ -567,7 +594,9 @@ public final class RPCClient {
                     continue;
                 }
 
-                if (message.has("method") && !message.has("id")) {
+                if (message.path("method").isTextual() && !message.has("id")) {
+                    notifyObservers(new JsonRpcNotification(message.path("jsonrpc").asText("2.0"),
+                            message.path("method").asText(), message.get("params")));
                     PromptTurn turn = activePrompt.get();
                     if (turn != null) {
                         turn.dispatch(toEvent(message));
