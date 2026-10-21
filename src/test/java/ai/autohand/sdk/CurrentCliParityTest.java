@@ -9,6 +9,12 @@ import org.junit.jupiter.api.io.TempDir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 class CurrentCliParityTest {
  @TempDir Path directory;
+ @Test void autoCommitUsesLongFlag() {
+  var args = SDKConfig.builder().autoCommit(true).build().cliArgs();
+  org.junit.jupiter.api.Assertions.assertTrue(args.contains("--auto-commit"));
+  org.junit.jupiter.api.Assertions.assertFalse(args.contains("-c"));
+ }
+
  @Test void browserCapabilitiesUseExactContract() throws Exception {
   Path cli=directory.resolve("autohand");
   Files.copy(Path.of("tests/fixtures/current-cli-controls.py"),cli);

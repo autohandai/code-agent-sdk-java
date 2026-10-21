@@ -218,7 +218,7 @@ public final class SDKConfig {
         addFlag(args, "--unrestricted", unrestricted);
         addFlag(args, "--auto-mode", autoMode);
         addFlag(args, "--auto-skill", autoSkill);
-        addFlag(args, "-c", autoCommit);
+        addFlag(args, "--auto-commit", autoCommit);
         if (Boolean.FALSE.equals(contextCompact)) {
             args.add("--no-context-compact");
         } else {
